@@ -30,7 +30,7 @@ concurrency:
 jobs:
   build:
     name: Build app
-    runs-on: blacksmith-8vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     environment: build
 
     steps:
