@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Catalog refresh + voice downloads. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Foreground service while a download is running. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- API 33+ requires a runtime grant for the progress notification. Best-effort:
+         we never block downloads on the user denying it. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Auto-updater: lets the app launch the system package installer
+         (Intent.ACTION_VIEW + application/vnd.android.package-archive) for an
+         APK it just downloaded under cacheDir/updates/. The user still has to
+         confirm the install in the system UI; this permission only avoids the
+         "Install blocked" OS error toast on API 26+. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- Voice cloning: capture a 5–30 s reference clip via the in-app
+         recorder. Asked at runtime via Activity.requestPermissions, only
+         when the user opens the cloning screen for a ZipVoice / Pocket
+         voice. Never requested at launch. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <application
+        android:name=".app.HayaiTtsApplication"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.HayaiTTS"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- P2: deep link target for download notification taps. The
+                 NavHost composable for [Routes.DOWNLOADS] registers the same
+                 URI pattern via `navDeepLink`, so this filter just gets the
+                 activity in front of the user; nav does the rest. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="hayaitts" android:host="downloads" />
+            </intent-filter>
+        </activity>
+
+        <activity-alias
+            android:name=".ManageVoices"
+            android:targetActivity=".ui.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="dev.ahmedmohamed.hayaitts.MANAGE_VOICES" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity
+            android:name=".ui.settings.SettingsActivity"
+            android:exported="true" />
+
+        <activity
+            android:name=".ui.help.HelpActivity"
+            android:exported="false" />
+
+        <!-- Crash-report screen. Launched from a fresh task by
+             CrashHandler when the previous task crashed; runs in its own
+             process so it survives the dying app. -->
+        <activity
+            android:name=".ui.crash.CrashActivity"
+            android:process=":crash"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance" />
+
+        <activity
+            android:name=".ui.speaker.SpeakerPickerActivity"
+            android:exported="false" />
+
+        <!-- v2 Phase 7f: "Speak with HayaiTTS" entry in text-selection menus.
+             Android delivers the selected text via Intent.EXTRA_PROCESS_TEXT;
+             the activity finishes itself after synthesizing + playing. -->
+        <activity
+            android:name=".ui.speakselection.SpeakSelectionActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:label="@string/speak_selection_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".tts.HayaiTtsService"
+            android:label="@string/app_name"
+            android:exported="true"
+            android:permission="android.permission.BIND_TEXT_SERVICE">
+            <intent-filter>
+                <action android:name="android.intent.action.TTS_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.speech.tts"
+                android:resource="@xml/tts_engine" />
+        </service>
+
+        <!-- WorkManager's SystemForegroundService is what hosts the voice
+             download progress notification. Lint requires us to declare the
+             dataSync foreground type here so API 34+ schedulers know what
+             we're doing while in the foreground. -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
+        <!-- Auto-updater file provider. Exposes only cacheDir/updates/ (see
+             res/xml/file_paths.xml) so the downloaded APK can be handed to the
+             system package installer via a content:// URI. Authority is
+             namespaced under the application ID so a side-loaded variant
+             (debug + release) does not collide. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updates"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+    
+        <!-- P2: handles Cancel + Retry actions on download notifications. -->
+        <receiver
+            android:name=".data.download.DownloadActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="dev.ahmedmohamed.hayaitts.action.CANCEL_DOWNLOAD" />
+                <action android:name="dev.ahmedmohamed.hayaitts.action.RETRY_DOWNLOAD" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

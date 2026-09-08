@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="PluralsCandidate">
+    <string name="app_name">HayaiTTS</string>
+    <string name="library_empty_title">No voices installed yet</string>
+    <string name="library_empty_subtitle">Browse the catalog to download offline neural voices</string>
+    <string name="library_browse_action">Browse models</string>
+    <string name="library_title">Voices</string>
+    <string name="voice_chip_bundled">Bundled</string>
+    <string name="settings_title">Settings</string>
+    <string name="download_in_progress">Downloading neural voice…</string>
+    <string name="library_downloading">Downloading…</string>
+    <string name="library_download_cancelled">Download cancelled</string>
+
+    <!-- Browse + Voice Detail (Phase 4b) -->
+    <string name="browse_empty_title">No voices match these filters</string>
+    <string name="browse_empty_subtitle">Try widening your language or tier filters.</string>
+    <string name="browse_search_placeholder_count">Search %1$d voices</string>
+    <string name="topbar_search_library">Search library</string>
+    <string name="topbar_search_browse">Search voices</string>
+    <string name="topbar_search_activity">Search activity</string>
+    <string name="topbar_search_settings">Search settings</string>
+    <string name="browse_filter_language_search">Search languages</string>
+    <string name="settings_allowed_languages">Languages shown</string>
+    <string name="settings_allowed_languages_all">All languages</string>
+    <string name="settings_allowed_languages_count">%1$d languages</string>
+    <string name="settings_allowed_languages_subtitle">Limit which languages appear in Browse and the filter list. Empty = show every language.</string>
+    <string name="settings_allowed_languages_sheet_title">Languages shown</string>
+    <string name="settings_allowed_languages_select_all">Select all</string>
+    <string name="browse_open_filters">Open filters</string>
+    <string name="browse_filter_sheet_title">Filters</string>
+    <string name="browse_filter_reset">Reset</string>
+    <string name="browse_filter_show_results">Show %1$d results</string>
+    <string name="action_clear">Clear</string>
+    <string name="browse_filter_language">Language</string>
+    <string name="browse_filter_tier">Tier</string>
+    <string name="browse_filter_family">Family</string>
+    <string name="browse_tier_all">All tiers</string>
+    <string name="browse_tier_low">Low</string>
+    <string name="browse_tier_mid">Mid</string>
+    <string name="browse_tier_high">High</string>
+    <string name="action_install">Install</string>
+    <string name="action_installed">Installed</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_uninstall">Uninstall</string>
+    <string name="action_back">Back</string>
+    <string name="action_play">Play</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_more">More</string>
+    <string name="voice_default_label">Default for %1$s</string>
+    <string name="voice_set_default">Set as default for %1$s</string>
+    <string name="voice_choose_default_speaker">Choose default speaker…</string>
+    <string name="speaker_picker_title">Default speaker</string>
+    <string name="speaker_picker_reset">Use voice default</string>
+    <string name="speaker_picker_reset_subtitle">Fall back to the first speaker in this voice.</string>
+    <string name="speaker_picker_subtitle" translatable="false">id %1$d · %2$s</string>
+    <string name="voice_detail_speakers">Speakers</string>
+    <string name="voice_detail_preview">Preview</string>
+    <string name="voice_detail_preview_text">The quick brown fox jumps over the lazy dog.</string>
+    <string name="voice_detail_preview_generating">Generating…</string>
+    <string name="voice_detail_preview_not_installed">Install the voice to preview</string>
+    <string name="voice_detail_license">License: %1$s</string>
+    <string name="voice_detail_sample_rate" translatable="false">%1$d Hz</string>
+    <string name="uninstall_confirm_title">Uninstall voice?</string>
+    <string name="uninstall_confirm_message">This will free up disk space. You can re-download it later from Browse.</string>
+    <string name="bundled_not_uninstallable">Bundled voices can\'t be uninstalled.</string>
+    <string name="download_progress_running" translatable="false">%1$d MB / %2$d MB · %3$d%%</string>
+    <string name="download_extracting">Extracting…</string>
+    <string name="download_extracting_progress">Extracting · %1$d%%</string>
+    <string name="family_piper" translatable="false">Piper</string>
+    <string name="family_kokoro" translatable="false">Kokoro</string>
+    <string name="family_vits" translatable="false">VITS</string>
+    <string name="family_matcha" translatable="false">Matcha</string>
+    <string name="family_kitten" translatable="false">Kitten</string>
+    <string name="family_zipvoice" translatable="false">ZipVoice</string>
+    <string name="family_pocket" translatable="false">Pocket</string>
+    <string name="family_supertonic" translatable="false">Supertonic</string>
+    <string name="family_custom">Custom</string>
+    <string name="tier_size_label" translatable="false">~%1$d MB</string>
+    <string name="voice_chip_coming_soon">Coming soon</string>
+    <string name="voice_detail_coming_soon_hint">This model family isn\'t supported by the current sherpa-onnx build. A future update will enable it.</string>
+
+    <!-- Phase 6: Custom voice import -->
+    <string name="library_import_action">Import voice</string>
+    <string name="custom_chip">Custom</string>
+    <string name="import_title">Import voice</string>
+    <string name="import_analyzing">Analyzing bundle…</string>
+    <string name="import_analyzing_failed">Could not read this bundle: %1$s</string>
+    <string name="import_unsupported_family">%1$s is not yet supported by this app build.</string>
+    <string name="import_family_override">Family</string>
+    <string name="import_voice_name">Voice name</string>
+    <string name="import_languages">Languages</string>
+    <string name="import_files_header">Files (%1$d)</string>
+    <string name="import_speakers_header">Speakers (%1$d)</string>
+    <string name="import_no_speakers">No speakers list found — defaulting to one speaker (sid 0).</string>
+    <string name="import_action_import">Import</string>
+    <string name="import_progress_copying">Copying bundle…</string>
+    <string name="import_progress_extracting">Extracting…</string>
+    <string name="import_progress_validating">Validating…</string>
+    <string name="import_lang_add">Add language</string>
+    <string name="import_lang_add_placeholder">BCP-47 tag (e.g. en-US)</string>
+    <string name="import_lang_add_ok">Add</string>
+    <string name="family_unknown">Unknown</string>
+
+    <!-- Phase 7: tier auto-recommendation pill + Settings overhaul -->
+    <string name="voice_chip_recommended">Recommended for your device</string>
+    <string name="voice_chip_cloning">Voice cloning</string>
+    <string name="voice_chip_streaming">Streaming</string>
+    <string name="browse_filter_capabilities">Capabilities</string>
+    <string name="browse_filter_cloning_only">Voice cloning</string>
+    <string name="cloning_title">Clone voice</string>
+    <string name="cloning_open_action">Clone this voice</string>
+    <string name="cloning_intro">Record or upload a short reference clip, type what it says, then type the new text. The cloned voice will speak it.</string>
+    <string name="cloning_record">Record</string>
+    <string name="cloning_stop_recording">Stop</string>
+    <string name="cloning_upload">Upload</string>
+    <string name="cloning_clip_summary">Reference clip</string>
+    <string name="cloning_reference_text">Reference transcript</string>
+    <string name="cloning_reference_text_hint">What the reference clip says, verbatim</string>
+    <string name="cloning_target_text">Target text</string>
+    <string name="cloning_target_text_hint">What the cloned voice should say</string>
+    <string name="cloning_generate">Generate</string>
+    <string name="cloning_generating">Generating…</string>
+    <string name="cloning_playing">Playing</string>
+    <string name="settings_section_downloads">Downloads</string>
+    <string name="settings_wifi_only">Wi-Fi only</string>
+    <string name="settings_wifi_only_subtitle">Block voice downloads on metered cellular.</string>
+    <string name="settings_storage_location">Storage location</string>
+    <string name="settings_storage_internal">Internal storage</string>
+    <string name="settings_storage_external">External SD card</string>
+    <string name="settings_storage_external_unavailable">No external storage detected</string>
+    <string name="settings_storage_moving">Moving voice %1$d / %2$d (%3$s)…</string>
+    <string name="settings_storage_move_failed">Move failed: %1$s</string>
+    <string name="settings_section_defaults">Default voices</string>
+    <string name="settings_defaults_empty">Install a voice to set per-language defaults.</string>
+    <string name="settings_pick_voice_title">Pick default for %1$s</string>
+    <string name="settings_pick_voice_clear">No default</string>
+    <string name="settings_section_storage">Storage</string>
+    <string name="settings_total_models_size">Installed voices: %1$s</string>
+    <string name="settings_clear_cache">Clear download cache</string>
+    <string name="settings_clear_cache_subtitle">Removes incomplete tarballs left over from cancelled downloads.</string>
+    <string name="settings_clear_cache_done">Cleared %1$s</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_version">%1$s · %2$s (%3$d)</string>
+    <string name="settings_powered_by">Models powered by sherpa-onnx</string>
+    <string name="settings_powered_by_subtitle">Tap to open the upstream project</string>
+    <string name="settings_license_label">License: GPL-3.0</string>
+    <string name="settings_license_subtitle">Tap to read the full license</string>
+    <string name="settings_license_dialog_title">License</string>
+    <string name="settings_license_dialog_close">Close</string>
+
+    <string name="settings_section_performance">Performance &amp; Hardware</string>
+    <string name="settings_nnapi">Hardware Acceleration (NNAPI)</string>
+    <string name="settings_nnapi_subtitle">Use Android Neural Networks API for faster model inference when supported.</string>
+    <string name="settings_threads">Synthesis Threads</string>
+    <string name="settings_threads_subtitle">Number of threads allocated for CPU synthesis.</string>
+    <string name="settings_threads_dialog_title">Select Thread Count</string>
+    <string name="settings_threads_value">%1$d threads</string>
+    <string name="settings_max_sentences">Synthesis Sentence Limit</string>
+    <string name="settings_max_sentences_subtitle">Maximum number of sentences synthesized in a single JNI call.</string>
+    <string name="settings_max_sentences_dialog_title">Select Sentence Limit</string>
+    <string name="settings_max_sentences_value">%1$d sentences</string>
+
+    <!-- UI/UX overhaul: quick switcher, featured, reorder, hero, stepper -->
+    <string name="library_subtitle">%1$d installed</string>
+    <string name="library_featured">Featured</string>
+    <string name="library_installed_header">All installed</string>
+    <string name="browse_filter_clear_all">Clear filters</string>
+    <string name="browse_filter_gender">Voice type</string>
+    <string name="browse_filter_gender_female">Female</string>
+    <string name="browse_filter_gender_male">Male</string>
+    <string name="browse_filter_gender_unknown">Unspecified</string>
+    <string name="library_open_settings">Settings</string>
+    <string name="voice_detail_actions_overflow">More actions</string>
+    <string name="voice_detail_install_primary">Install voice</string>
+    <string name="voice_detail_cancel_primary">Cancel download</string>
+    <string name="voice_detail_uninstall_action">Uninstall</string>
+    <string name="quick_switch_title">Quick switch</string>
+    <string name="quick_switch_subtitle">Pick the default voice for the moment</string>
+    <string name="quick_switch_current">Current default</string>
+    <string name="quick_switch_manage">Manage</string>
+    <string name="quick_switch_add">Add voice</string>
+    <string name="quick_switch_empty">Install a voice to enable quick switching.</string>
+    <string name="voice_favorite">Star voice</string>
+    <string name="voice_unfavorite">Unstar voice</string>
+    <string name="action_reorder">Reorder voices</string>
+    <string name="action_done">Done</string>
+    <string name="action_move_up">Move up</string>
+    <string name="action_move_down">Move down</string>
+    <string name="voice_detail_speakers_count">%1$d speakers</string>
+    <string name="voice_detail_set_default_header">Use as default</string>
+    <string name="import_subtitle">Bring your own voice bundle</string>
+    <string name="import_step_analyze">Analyze</string>
+    <string name="import_step_confirm">Confirm</string>
+    <string name="import_step_install">Install</string>
+    <string name="settings_subtitle">Tune downloads, storage, defaults</string>
+
+    <!-- P1: Auto-updater + in-app changelog viewer -->
+    <string name="settings_section_updates">Updates</string>
+    <string name="settings_update_channel">Update channel</string>
+    <string name="settings_update_channel_stable">Stable</string>
+    <string name="settings_update_channel_beta">Beta</string>
+    <string name="settings_update_channel_nightly">Nightly</string>
+    <string name="settings_update_channel_dialog_title">Update channel</string>
+    <string name="settings_update_channel_stable_subtitle">Tagged releases only.</string>
+    <string name="settings_update_channel_beta_subtitle">Stable plus tagged betas (vX.Y.Z-bN).</string>
+    <string name="settings_update_channel_nightly_subtitle">All builds including ad-hoc nightlies. May be unstable.</string>
+    <string name="settings_current_version">Current version</string>
+    <string name="settings_current_version_value" translatable="false">%1$s · %2$s (%3$d)</string>
+    <string name="settings_check_for_updates">Check for updates</string>
+    <string name="settings_check_for_updates_subtitle">Look for a newer release on this channel now.</string>
+    <string name="settings_checking_for_updates">Checking for updates…</string>
+    <string name="settings_last_checked">Last checked</string>
+    <string name="settings_last_checked_never">Never</string>
+    <string name="settings_last_checked_just_now">Just now</string>
+    <string name="settings_last_checked_minutes">%1$d min ago</string>
+    <string name="settings_last_checked_hours">%1$d hr ago</string>
+    <string name="settings_last_checked_days">%1$d d ago</string>
+    <string name="settings_update_uptodate">You\'re on the latest version.</string>
+    <string name="settings_update_available">Update available: %1$s</string>
+    <string name="settings_update_failed">Update check failed: %1$s</string>
+    <string name="update_dialog_title">New version available</string>
+    <string name="update_action_install">Update now</string>
+    <string name="update_action_later">Later</string>
+    <string name="update_channel_stable">Stable</string>
+    <string name="update_channel_beta">Beta</string>
+    <string name="update_channel_nightly">Nightly</string>
+    <string name="update_progress_caption" translatable="false">%1$s / %2$s · %3$d%%</string>
+    <string name="update_download_failed">Download failed: %1$s</string>
+    <string name="update_no_changelog">No release notes provided.</string>
+
+    <!-- P4: First-launch onboarding flow (onboarding_*) -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_welcome_title">Welcome to HayaiTTS</string>
+    <string name="onboarding_welcome_body">Offline neural text-to-speech for Android. Every voice runs on your device — no cloud, no telemetry, no quota.</string>
+    <string name="onboarding_engine_title">Set HayaiTTS as your engine</string>
+    <string name="onboarding_engine_body">Open Settings → System → Languages &amp; input → Text-to-speech engines and pick HayaiTTS as your preferred engine. Apps that read text aloud will route through HayaiTTS automatically.</string>
+    <string name="onboarding_engine_action">Open system TTS settings</string>
+    <string name="onboarding_tier_title">Pick voices for your device</string>
+    <string name="onboarding_tier_recommendation_low">Recommended for your device: Low. Low models work even on entry-level hardware.</string>
+    <string name="onboarding_tier_recommendation_mid">Recommended for your device: Mid. Mid models balance speed and quality on most phones.</string>
+    <string name="onboarding_tier_recommendation_high">Recommended for your device: High. Your hardware can run our largest models comfortably.</string>
+    <string name="onboarding_tier_low">Low — fastest, smallest, runs on any phone</string>
+    <string name="onboarding_tier_mid">Mid — balanced speed and quality (recommended)</string>
+    <string name="onboarding_tier_high">High — best quality, needs at least 4 GB RAM</string>
+    <string name="onboarding_ready_title">Ready to browse</string>
+    <string name="onboarding_ready_body">Browse 188+ voices across 8 model families. Or import your own bundle from the Library tab.</string>
+    <string name="onboarding_ready_action">Get started</string>
+
+    <!-- P4: Help / FAQ screen (help_*) -->
+    <string name="help_title">Help &amp; FAQ</string>
+    <string name="help_subtitle">Getting started, voices, troubleshooting</string>
+    <string name="settings_help_label">Help &amp; FAQ</string>
+    <string name="settings_help_subtitle">Setup, troubleshooting, and tips</string>
+    <string name="help_section_getting_started_title">Getting started</string>
+    <string name="help_section_getting_started_body">1. Browse the catalog and install a voice for your language.\n2. Open Settings → System → Languages &amp; input → Text-to-speech engines and set HayaiTTS as your preferred engine.\n3. Try the synth from any app that reads text aloud — accessibility, ebook readers, navigation, or assistant apps.</string>
+    <string name="help_section_choose_voice_title">Choosing the right voice</string>
+    <string name="help_section_choose_voice_body">Voices come in three quality tiers:\n• Low — fastest, smallest, runs on any phone.\n• Mid — balanced speed and quality. Recommended for most users.\n• High — best quality, needs at least 4 GB RAM.\n\nDifferent model families have different strengths: Piper is fast and lightweight, VITS / Matcha / Kokoro favour expressiveness, and Supertonic / ZipVoice / Pocket push naturalness. The catalog shows a \"Recommended for your device\" pill on voices that match your hardware tier.</string>
+    <string name="help_section_locale_defaults_title">Per-locale defaults</string>
+    <string name="help_section_locale_defaults_body">You can install multiple voices for the same language and switch between them in two places:\n• Settings → Default voices — pick one default voice per language.\n• Quick switch (top-bar icon) — change the active default on the fly without leaving your current app.\nThe system TTS framework picks your default when an app requests that language.</string>
+    <string name="help_section_custom_voices_title">Custom voices</string>
+    <string name="help_section_custom_voices_body">Use the Import action on the Library top bar to bring your own sherpa-onnx voice bundles. Accepted formats:\n• .tar.bz2 — the canonical sherpa-onnx archive format.\n• .zip — extracted bundle re-zipped.\n• .onnx — a single model file (we will infer the family).\n\nThe import wizard analyzes the bundle, detects the model family, and lets you tweak the name + language tags before installing.</string>
+    <string name="help_section_custom_voices_action">Open sherpa-onnx TTS docs</string>
+    <string name="help_section_storage_title">Storage location</string>
+    <string name="help_section_storage_body">By default voices are installed under the app\'s internal storage. If your device has an SD card you can move every installed voice to the card via Settings → Storage location → External SD card. The migration is live — installed voices are copied over while the toggle runs.\n\nUninstalling the app removes internal voices but does NOT remove voices on an SD card; delete the SD-card folder manually if you want to reclaim that space.</string>
+    <string name="help_section_updates_title">App updates</string>
+    <string name="help_section_updates_body">HayaiTTS checks for new releases when you open the app (debounced — at most once every 6 hours). When an update is available a dialog offers to download and install it. Update channels:\n• Stable — production releases, lowest risk.\n• Beta — release candidates a few days ahead of stable.\n• Nightly — the latest commit on main, may include rough edges.\nPick a channel from Settings → Update channel.</string>
+    <string name="help_section_troubleshooting_title">Troubleshooting</string>
+    <string name="help_section_troubleshooting_body">Voices don\'t appear in other apps — make HayaiTTS the system default engine (Settings → System → Languages &amp; input → Text-to-speech engines).\n\nDownload failed: checksum mismatch — re-try the download from Browse. If the failure persists the upstream model has changed; please file a bug.\n\nSynth produces silence — the model files may have been corrupted by an interrupted extraction. Uninstall the voice from Library, then re-install from Browse.\n\nApp crashes when picking a voice — check that the catalog finished loading. If the issue persists, clear the download cache from Settings → Storage.</string>
+    <string name="help_section_about_title">About</string>
+    <string name="help_section_about_body">HayaiTTS is an open-source, offline-first text-to-speech engine for Android. Built on sherpa-onnx with neural voices from Piper, Kokoro, VITS, Matcha, Kitten, ZipVoice, Pocket, and Supertonic. Licensed under GPL-3.0.</string>
+    <string name="help_section_about_action">View on GitHub</string>
+
+    <!-- P4: Rich tooltips on key controls (tooltip_*) -->
+    <string name="tooltip_import_title">Import a voice</string>
+    <string name="tooltip_import_body">Import a voice bundle (.tar.bz2 / .zip / .onnx) from device storage.</string>
+    <string name="tooltip_filter_title">Filter the catalog</string>
+    <string name="tooltip_filter_body">Filter voices by language, quality tier, and model family.</string>
+    <string name="tooltip_quick_switch_title">Quick switch</string>
+    <string name="tooltip_quick_switch_body">Quickly set the default voice for any language.</string>
+    <string name="tooltip_preview_play_title">Preview voice</string>
+    <string name="tooltip_preview_play_body">Generate a preview using the selected speaker and current speed / pitch.</string>
+
+    <!-- P5: Model Playground + per-voice tuning -->
+    <string name="playground_title">Playground</string>
+    <string name="voice_detail_open_playground">Open in Playground</string>
+    <string name="playground_text_header">Text</string>
+    <string name="playground_text_placeholder">Type something to synthesize…</string>
+    <string name="playground_tuning_header">Tuning</string>
+    <string name="playground_slider_speed">Speed</string>
+    <string name="playground_slider_pitch">Pitch</string>
+    <string name="playground_slider_length">Length</string>
+    <string name="playground_slider_noise">Noise Scale</string>
+    <string name="playground_slider_noise_w">Noise Scale W</string>
+    <string name="playground_reset">Reset</string>
+    <string name="playground_pitch_tooltip">Pitch is implemented via resample — small shifts only.</string>
+    <string name="playground_play">Play</string>
+    <string name="playground_generating">Generating…</string>
+    <string name="playground_not_installed">Install this voice to use the playground.</string>
+    <string name="playground_history_header">History</string>
+    <string name="playground_history_empty">Generated samples will appear here.</string>
+    <string name="playground_history_chip" translatable="false">%1$s / %2$s / %3$s</string>
+    <string name="playground_history_play">Replay sample</string>
+    <string name="playground_history_delete">Delete sample</string>
+    <string name="playground_time_just_now">just now</string>
+    <string name="playground_time_minutes">%1$d min ago</string>
+    <string name="playground_time_hours">%1$d hr ago</string>
+    <string name="playground_time_days">%1$d d ago</string>
+
+    <!-- P2: Downloads Manager screen + hardened notifications -->
+    <string name="downloads_title">Downloads</string>
+    <string name="downloads_subtitle_active">%1$d active</string>
+    <string name="downloads_subtitle_idle">No active downloads</string>
+    <string name="downloads_open">Open downloads</string>
+    <string name="downloads_clear_completed">Clear completed</string>
+    <string name="downloads_section_active">Active</string>
+    <string name="downloads_section_failed">Failed</string>
+    <string name="downloads_section_completed">Recently completed</string>
+    <string name="downloads_empty_title">Nothing downloading</string>
+    <string name="downloads_empty_subtitle">Downloads you start from Browse will appear here.</string>
+    <string name="downloads_status_queued">Queued</string>
+    <string name="downloads_status_running" translatable="false">%1$s / %2$s · %3$d%%</string>
+    <string name="downloads_status_extracting_pct">Extracting %1$d%%</string>
+    <string name="downloads_status_failed">Failed: %1$s</string>
+    <string name="downloads_status_completed">Completed</string>
+    <string name="downloads_status_completed_ago">Completed %1$s ago</string>
+    <string name="downloads_action_retry">Retry</string>
+    <string name="downloads_action_redownload">Re-download</string>
+    <string name="downloads_action_remove_history">Remove from history</string>
+    <string name="downloads_action_cancel">Cancel</string>
+    <string name="downloads_size_kb" translatable="false">%1$d KB</string>
+    <string name="downloads_size_mb" translatable="false">%1$d MB</string>
+    <string name="downloads_size_unknown" translatable="false">--</string>
+    <string name="downloads_time_just_now">just now</string>
+    <string name="downloads_time_minutes">%1$d min</string>
+    <string name="downloads_time_hours">%1$d hr</string>
+    <string name="downloads_time_days">%1$d d</string>
+    <string name="download_active_channel_name">Voice downloads (active)</string>
+    <string name="download_active_channel_description">Ongoing voice download progress.</string>
+    <string name="download_complete_channel_name">Voice downloads (completed)</string>
+    <string name="download_complete_channel_description">One-shot install / failure notifications.</string>
+    <string name="download_notification_big_text">Downloading neural voice (%1$s / %2$s)</string>
+    <string name="download_notification_big_text_indeterminate">Downloading neural voice…</string>
+    <string name="download_notification_installed_title">Installed %1$s</string>
+    <string name="download_notification_installed_text">Voice ready to use.</string>
+    <string name="download_notification_failed_title">Download failed: %1$s</string>
+    <string name="download_notification_failed_text">%1$s — tap to retry</string>
+    <string name="download_notification_action_cancel">Cancel</string>
+    <string name="download_notification_action_retry">Retry</string>
+
+    <string name="empty_section">Nothing here yet.</string>
+    <string name="speak_selection_label">Speak with HayaiTTS</string>
+    <string name="voice_detail_sample_play">Listen sample</string>
+    <string name="voice_detail_sample_loading">Loading…</string>
+    <string name="voice_detail_sample_stop">Stop sample</string>
+
+    <!-- v2 NavigationBar tabs. -->
+    <string name="nav_library">Library</string>
+    <string name="nav_browse">Browse</string>
+    <string name="nav_studio">Studio</string>
+    <string name="nav_activity">Activity</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- v2 Studio. -->
+    <string name="studio_title">Studio</string>
+    <string name="studio_subtitle">Tune, A/B, export</string>
+    <string name="studio_no_voices">Install a voice from Browse to use Studio.</string>
+    <string name="studio_swap_voice">Switch voice</string>
+
+    <!-- v2 Activity tab. -->
+    <string name="activity_title">Activity</string>
+    <string name="activity_subtitle">Downloads · Generations · Cache</string>
+    <string name="activity_pane_downloads">Downloads</string>
+    <string name="activity_pane_extractions">Extracting</string>
+    <string name="activity_pane_generations">Live</string>
+    <string name="activity_pane_log">Requests</string>
+    <string name="activity_pane_cache">Cache</string>
+    <string name="activity_no_live_generations">No live synthesis happening right now. Open a TTS-consuming app to see RTF telemetry here.</string>
+    <string name="activity_no_request_log">No external apps have requested synthesis yet.</string>
+    <string name="activity_throughput_mbs">%1$.1f MB/s</string>
+    <string name="activity_rtf">RTF %1$.2f</string>
+
+    <!-- v2 filter dimensions. -->
+    <string name="filter_gender_female">Female</string>
+    <string name="filter_gender_male">Male</string>
+    <string name="filter_gender_neutral">Neutral</string>
+    <string name="filter_gender_unknown">Unknown</string>
+    <string name="filter_known_gender">Has gender data</string>
+    <string name="filter_multi_speaker">Multi-speaker</string>
+    <string name="filter_available_only">Available now</string>
+    <string name="filter_section_gender">Gender</string>
+    <string name="filter_section_license">License</string>
+    <string name="filter_section_sample_rate">Sample rate</string>
+    <string name="filter_section_size">Size</string>
+    <string name="filter_size_small">Small &lt;30 MB</string>
+    <string name="filter_size_medium">30–80 MB</string>
+    <string name="filter_size_large">&gt;80 MB</string>
+    <string name="filter_rate_16khz">16 kHz</string>
+    <string name="filter_rate_22khz">22 kHz</string>
+    <string name="filter_rate_24khz">24 kHz</string>
+    <string name="filter_rate_48khz">48 kHz</string>
+    <string name="filter_loosen_action">Loosen filter</string>
+    <string name="filter_no_results_title">No voices match</string>
+    <string name="filter_no_results_body">Try clearing one filter, or loosen the last one you set.</string>
+    <string name="filter_result_count">%1$d results</string>
+
+    <!-- v2 notification channels. -->
+    <string name="extraction_channel_name">Voice extraction</string>
+    <string name="extraction_channel_description">Quiet progress while a downloaded voice is being unpacked.</string>
+    <string name="tts_nudge_channel_name">Speaking</string>
+    <string name="tts_nudge_channel_description">Shown while HayaiTTS is actively speaking on behalf of another app.</string>
+    <string name="tts_nudge_title">HayaiTTS is speaking</string>
+    <string name="tts_nudge_action_stop">Stop</string>
+    <string name="updates_channel_name">App updates</string>
+    <string name="updates_channel_description">Notifies you when a newer HayaiTTS build is on GitHub.</string>
+    <string name="catalog_refresh_channel_name">New voices</string>
+    <string name="catalog_refresh_channel_description">When the weekly catalog scrape finds new voices to install.</string>
+
+    <!-- v2.5: crash screen -->
+    <string name="crash_title">HayaiTTS crashed</string>
+    <string name="crash_body">Sorry — something went wrong. Copy the report below and paste it into a GitHub issue at github.com/HayaiApp/HayaiTTS so we can fix it.</string>
+    <string name="crash_copy">Copy report</string>
+    <string name="crash_restart">Restart</string>
+    <string name="crash_copied">Copied to clipboard</string>
+
+    <!-- v2.5: Activity tab status + cache labels -->
+    <string name="activity_status_idle">Idle</string>
+    <string name="activity_status_running_pct" translatable="false">%1$d%%</string>
+    <string name="activity_status_cancelled">Cancelled</string>
+    <string name="activity_cache_voices_installed">%1$d voices installed</string>
+    <string name="activity_cache_mb_on_disk">%1$d MB on disk</string>
+    <string name="activity_generation_detail">synth %1$d ms · audio %2$d ms · %3$d chars</string>
+    <string name="activity_request_chars" translatable="false">%1$d ch</string>
+
+    <!-- v2.5: Voice Detail metadata section -->
+    <string name="voice_detail_about">About</string>
+    <string name="voice_detail_dataset">Dataset: %1$s</string>
+    <string name="voice_detail_author">By %1$s</string>
+    <string name="voice_detail_base_model">Fine-tuned from %1$s</string>
+    <string name="voice_detail_source_link">View source</string>
+    <string name="voice_detail_use_cases">Best for</string>
+</resources>

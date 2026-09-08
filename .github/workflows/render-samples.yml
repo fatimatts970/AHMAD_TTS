@@ -1,0 +1,536 @@
+name: Render voice samples
+
+# Rebuilds the per-(speaker, language) MP3 sample library hosted on the
+# sharded sample releases. HayaiTTS' Browse and Voice Detail audition
+# buttons stream the clips at:
+#   https://github.com/HayaiApp/HayaiTTS-samples/releases/download/samples-<shard>/<voice_id>__sid<N>__<lang>.mp3
+# where `<shard>` is `zlib.crc32(filename) % 4`. Sharding sidesteps GitHub's
+# 1000-assets-per-release cap (current corpus is ~3,156 files).
+#
+# Pipeline (four stages):
+#
+#   plan                     — read the catalog, bin-pack voices into N
+#                              render shards by cost (speakers ×
+#                              render_languages). Unrelated to the 4
+#                              hosting shards.
+#
+#   prepare-assets-manifest  — list assets currently on every sharded
+#                              release (and the legacy samples-rolling
+#                              release during migration); write the union
+#                              to `existing-assets.json`. Lets render
+#                              skip combos that already exist online,
+#                              even when its local cache is cold.
+#
+#   render                   — matrix of N parallel jobs. Each renders
+#                              only its assigned voices, writes the MP3s
+#                              to `samples/` and a patch JSON. Skips any
+#                              combo present in the manifest.
+#
+#   publish                  — downloads every shard's samples + patches,
+#                              merges patches into `catalog/v1/models.json`,
+#                              buckets MP3s by hosting shard, uploads each
+#                              bucket to its `samples-<i>` release on
+#                              HayaiTTS-samples, commits the catalog.
+#
+# Runs on GitHub-hosted `ubuntu-latest`, NOT Blacksmith — the workload is
+# bandwidth-bound (bundle downloads dominate); paid runner minutes would
+# be wasted. With 12 shards the longest single shard is roughly 2h.
+
+on:
+  workflow_dispatch:
+    inputs:
+      family:
+        description: 'Restrict to one family (piper / kokoro / kitten / matcha / supertonic / vits / zipvoice / pocket). Empty = all.'
+        required: false
+        type: string
+        default: ''
+      shards:
+        description: 'Number of parallel render shards (default 12). Lower for smoke tests, raise if any single voice gets too large.'
+        required: false
+        type: number
+        default: 12
+  schedule:
+    # Mondays 10:00 UTC — two hours after catalog-refresh so any newly
+    # added voices get their samples rendered the same day.
+    - cron: '0 10 * * 1'
+
+concurrency:
+  group: render-samples
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      shards: ${{ steps.compute.outputs.shards }}
+      shard_count: ${{ steps.compute.outputs.shard_count }}
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compute shard plan
+        id: compute
+        run: |
+          set -euo pipefail
+          SHARDS="${{ inputs.shards || 12 }}"
+          python tools/samples/plan_shards.py \
+            --catalog catalog/v1/models.json \
+            --shards "$SHARDS" \
+            --output shard-plan.json
+          # Surface the index list to the matrix job below.
+          INDICES=$(python -c "import json; p=json.load(open('shard-plan.json')); print(json.dumps([b['index'] for b in p]))")
+          echo "shards=$INDICES" >> "$GITHUB_OUTPUT"
+          echo "shard_count=$SHARDS" >> "$GITHUB_OUTPUT"
+
+      - name: Upload shard plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: shard-plan
+          path: shard-plan.json
+          if-no-files-found: error
+
+  prepare-assets-manifest:
+    # Lists every MP3 already published to the sharded sample releases
+    # (and the legacy `samples-rolling` release on this repo during the
+    # migration window) so the render jobs can skip combos that already
+    # exist online — survives a cold per-shard cache.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Fetch existing assets from sharded sample releases
+        env:
+          GH_TOKEN: ${{ secrets.SAMPLES_REPO_TOKEN }}
+          LEGACY_GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python <<'PY'
+          import json, os, subprocess
+          REPO = "HayaiApp/HayaiTTS-samples"
+          SHARDS = 4
+          LEGACY_REPO = "HayaiApp/HayaiTTS"
+          LEGACY_TAG = "samples-rolling"
+
+          names: set[str] = set()
+          for tag in [f"samples-{i}" for i in range(SHARDS)]:
+              try:
+                  out = subprocess.check_output(
+                      ["gh", "api",
+                       f"repos/{REPO}/releases/tags/{tag}",
+                       "--jq", ".assets[].name"],
+                      text=True,
+                  )
+                  asset_names = [n for n in out.splitlines() if n]
+                  names.update(asset_names)
+                  print(f"  {tag}: {len(asset_names)} assets")
+              except subprocess.CalledProcessError:
+                  print(f"  {tag}: release not found yet (first run?)")
+
+          # Legacy fallback: pull from the old single release on this repo
+          # so the migration run can skip-and-relabel instead of re-rendering
+          # ~3k MP3s. Remove this block in PR 2 once the new releases are
+          # populated.
+          env_with_legacy = {**os.environ,
+                             "GH_TOKEN": os.environ.get("LEGACY_GH_TOKEN", "")}
+          try:
+              out = subprocess.check_output(
+                  ["gh", "api",
+                   f"repos/{LEGACY_REPO}/releases/tags/{LEGACY_TAG}",
+                   "--jq", ".assets[].name"],
+                  text=True,
+                  env=env_with_legacy,
+              )
+              legacy = [n for n in out.splitlines() if n]
+              names.update(legacy)
+              print(f"  LEGACY {LEGACY_TAG}: {len(legacy)} assets")
+          except subprocess.CalledProcessError as e:
+              print(f"  LEGACY {LEGACY_TAG}: skipped ({e})")
+
+          with open("existing-assets.json", "w", encoding="utf-8") as fh:
+              json.dump(sorted(names), fh)
+          print(f"total unique asset names: {len(names)}")
+          PY
+
+      - name: Upload existing-assets manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: existing-assets
+          path: existing-assets.json
+          if-no-files-found: error
+
+  render:
+    needs: [plan, prepare-assets-manifest]
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJson(needs.plan.outputs.shards) }}
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install OS deps (ffmpeg + espeak-ng-data)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg espeak-ng-data
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          # Pinned to match the AAR vendored in app/libs/sherpa-onnx-1.13.2.aar
+          # so the renderer uses the same per-family config shapes the app sees.
+          pip install requests sherpa-onnx==1.13.2 numpy
+
+      - name: Download shard plan
+        uses: actions/download-artifact@v4
+        with:
+          name: shard-plan
+          path: .
+
+      - name: Download existing-assets manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: existing-assets
+          path: .
+
+      - name: Restore sample + bundle cache
+        # Per-shard cache key keeps multi-job runs from stomping each other.
+        # `restore-keys` falls back to any prior render-samples cache so
+        # bundle downloads survive across runs.
+        uses: actions/cache@v4
+        with:
+          path: |
+            .sample_cache
+            samples
+          key: render-samples-v3-shard${{ matrix.shard }}-${{ hashFiles('catalog/v1/models.json') }}
+          restore-keys: |
+            render-samples-v3-shard${{ matrix.shard }}-
+            render-samples-v3-
+            render-samples-v2-
+
+      - name: Render shard ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          VOICES=$(python -c "import json; p=json.load(open('shard-plan.json')); print(','.join(next(b['voices'] for b in p if b['index'] == ${{ matrix.shard }})))")
+          if [ -z "$VOICES" ]; then
+            echo "shard ${{ matrix.shard }} is empty"
+            mkdir -p samples patches
+            echo '{}' > patches/shard-${{ matrix.shard }}.json
+            exit 0
+          fi
+          mkdir -p patches
+          python tools/samples/render_samples.py \
+            --catalog catalog/v1/models.json \
+            --output samples \
+            --cache .sample_cache \
+            --only-missing \
+            --existing-assets existing-assets.json \
+            --voices "$VOICES" \
+            --patch-output patches/shard-${{ matrix.shard }}.json \
+            ${{ inputs.family && format('--family {0}', inputs.family) || '' }}
+
+      - name: Upload shard samples
+        uses: actions/upload-artifact@v4
+        with:
+          name: samples-shard-${{ matrix.shard }}
+          path: samples/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload shard patch
+        uses: actions/upload-artifact@v4
+        with:
+          name: patches-shard-${{ matrix.shard }}
+          path: patches/shard-${{ matrix.shard }}.json
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: [plan, prepare-assets-manifest, render]
+    if: always() && needs.render.result != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download every shard's samples
+        uses: actions/download-artifact@v4
+        with:
+          pattern: samples-shard-*
+          path: samples-by-shard
+          merge-multiple: true
+
+      - name: Download every shard's patches
+        uses: actions/download-artifact@v4
+        with:
+          pattern: patches-shard-*
+          path: patches
+
+      - name: Consolidate sample MP3s into one directory
+        run: |
+          # `merge-multiple: true` already flattened samples-by-shard/, but
+          # let it be defensive: glob through everything and move into samples/.
+          mkdir -p samples
+          if [ -d samples-by-shard ]; then
+            find samples-by-shard -type f -name '*.mp3' -exec mv -n {} samples/ \;
+          fi
+          echo "Consolidated $(ls -1 samples/*.mp3 2>/dev/null | wc -l) MP3s."
+
+      - name: Merge patches into catalog
+        run: |
+          python <<'PY'
+          import json, glob, os
+          with open("catalog/v1/models.json", "r", encoding="utf-8") as fh:
+              catalog = json.load(fh)
+          patches = {}
+          for path in sorted(glob.glob("patches/**/*.json", recursive=True)):
+              with open(path, "r", encoding="utf-8") as fh:
+                  patches.update(json.load(fh))
+          by_id = {v["id"]: v for v in catalog.get("voices", [])}
+          # Lightweight gender heuristic so release-only voices get
+          # something better than "U" when the speaker name matches a
+          # well-known gendered first name or a Kokoro/Kitten prefix.
+          # The doc-scraper has a richer table and we never downgrade
+          # its output; this only fills bare placeholders.
+          KNOWN_FEMALE = {
+              "amy", "alba", "amelie", "anna", "ariana", "ava", "bella", "bel",
+              "carla", "cora", "daria", "ella", "emma", "eva", "freya", "gala",
+              "hannah", "irina", "iris", "isabel", "jenny", "joana", "katja",
+              "katie", "kim", "lena", "lila", "linda", "lola", "luna", "maja",
+              "maria", "marta", "mei", "mia", "nicole", "nina", "olga", "rachel",
+              "raquel", "ria", "rosa", "sara", "selena", "sky", "sofia", "sophia",
+              "stella", "thalia", "tina", "vera", "yumi", "zara",
+          }
+          KNOWN_MALE = {
+              "adam", "alan", "alex", "alfonso", "ali", "andre", "andrew",
+              "antton", "antonio", "ari", "arjun", "arman", "ben", "bryce",
+              "carl", "carlos", "chris", "daniel", "dario", "david", "dennis",
+              "diego", "eric", "felix", "frank", "george", "henry", "hugo",
+              "ivan", "jack", "james", "jesper", "joe", "john", "joseph",
+              "juan", "karen", "kenny", "kim", "kyle", "lee", "lessac",
+              "lukas", "luke", "marco", "mario", "mark", "martin", "matt",
+              "max", "miguel", "mike", "nick", "norman", "oleg", "oliver",
+              "pablo", "paul", "pavel", "pedro", "peter", "ravi", "ryan",
+              "sam", "samuel", "sergio", "simon", "stefan", "thomas", "tim",
+              "tom", "tony", "victor", "viktor", "william",
+          }
+          def infer_gender(name: str) -> tuple[str, str]:
+              first = name.lower().strip().split("_")[0].split("-")[0]
+              # Kokoro-style prefix codes: `af_…` American Female, etc.
+              if len(first) == 2 and first[1] in "fm":
+                  return ("F", "inferred") if first[1] == "f" else ("M", "inferred")
+              if first in KNOWN_FEMALE:
+                  return "F", "inferred"
+              if first in KNOWN_MALE:
+                  return "M", "inferred"
+              return "U", "unknown"
+
+          touched = 0
+          enriched = 0
+          for vid, patch in patches.items():
+              v = by_id.get(vid)
+              if v is None:
+                  continue
+              # --- Sample / audition URLs ------------------------------
+              v["sampleAudioUrl"] = patch.get("sampleAudioUrl", v.get("sampleAudioUrl"))
+              if patch.get("speakerSamples"):
+                  v["speakerSamples"] = patch["speakerSamples"]
+
+              # --- Authoritative runtime numbers ---------------------
+              if patch.get("sampleRateHz"):
+                  v["sampleRateHz"] = patch["sampleRateHz"]
+              if patch.get("languageHint") and not v.get("languages"):
+                  v["languages"] = [patch["languageHint"]]
+
+              # --- Free-form descriptive ----------------------------
+              for k_src, k_dst in (
+                  ("description", "description"),
+                  ("quality", "quality"),
+                  ("dataset", "dataset"),
+                  ("phonemeType", "phonemeType"),
+                  ("vocabSize", "vocabSize"),
+                  ("author", "author"),
+                  ("sourceUrl", "sourceUrl"),
+                  ("baseModel", "baseModel"),
+                  ("renderRtf", "renderRtf"),
+                  ("renderDurationMs", "renderDurationMs"),
+                  ("defaultLengthScale", "defaultLengthScale"),
+                  ("defaultNoiseScale", "defaultNoiseScale"),
+                  ("defaultNoiseScaleW", "defaultNoiseScaleW"),
+                  ("bundleStructure", "bundleStructure"),
+              ):
+                  if patch.get(k_src) is not None:
+                      v[k_dst] = patch[k_src]
+
+              # License hint: only overwrite the family default when
+              # the bundle ships an actual LICENSE / MODEL_CARD entry
+              # and we don't yet have something better.
+              if patch.get("licenseHint") and (v.get("license") in (None, "", "unknown")):
+                  v["license"] = patch["licenseHint"]
+
+              # --- Speakers -----------------------------------------
+              probe_speakers = patch.get("speakers")
+              if probe_speakers and len(v.get("speakers", [])) <= 1:
+                  enriched_speakers = []
+                  for sp in probe_speakers:
+                      name = sp.get("name") or f"speaker_{sp.get('id', 0)}"
+                      g, conf = infer_gender(name)
+                      enriched_speakers.append({
+                          "id": sp.get("id", 0),
+                          "name": name,
+                          "gender": g,
+                          "genderConfidence": conf,
+                      })
+                  v["speakers"] = enriched_speakers
+                  enriched += 1
+              probe_n = patch.get("numSpeakers")
+              if isinstance(probe_n, int) and probe_n > len(v.get("speakers", [])):
+                  existing = v.get("speakers") or []
+                  for i in range(len(existing), probe_n):
+                      existing.append({
+                          "id": i, "name": f"speaker_{i}",
+                          "gender": "U", "genderConfidence": "unknown",
+                      })
+                  v["speakers"] = existing
+                  enriched += 1
+
+              touched += 1
+          with open("catalog/v1/models.json", "w", encoding="utf-8", newline="\n") as fh:
+              json.dump(catalog, fh, ensure_ascii=False, indent=2)
+              fh.write("\n")
+          print(f"merged patches for {touched} of {len(patches)} voices into catalog ({len(catalog.get('voices', []))} total); enriched speakers for {enriched}")
+          PY
+
+      - name: Summarise rendered samples
+        id: summary
+        run: |
+          count=$(ls -1 samples/*.mp3 2>/dev/null | wc -l || echo 0)
+          total=$(grep -o '"id":' catalog/v1/models.json | wc -l)
+          echo "rendered=$count" >> "$GITHUB_OUTPUT"
+          echo "total=$total" >> "$GITHUB_OUTPUT"
+          {
+            echo "Rendered: $count clips across $total voices"
+            echo
+            echo "Sample list (first 30):"
+            ls -1 samples/ | head -30 | sed 's/^/  - /'
+          } >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Ensure sharded sample releases exist
+        if: steps.summary.outputs.rendered != '0'
+        env:
+          GH_TOKEN: ${{ secrets.SAMPLES_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          for i in 0 1 2 3; do
+            tag="samples-$i"
+            if ! gh release view "$tag" --repo HayaiApp/HayaiTTS-samples >/dev/null 2>&1; then
+              gh release create "$tag" \
+                --repo HayaiApp/HayaiTTS-samples \
+                --title "Voice samples (shard $i of 4)" \
+                --prerelease \
+                --notes "Per-(speaker, language) MP3 audition clips for HayaiTTS. Asset filenames hash into this shard via \`zlib.crc32(name) % 4\`. Rendered weekly from sherpa-onnx; see https://github.com/HayaiApp/HayaiTTS/blob/main/.github/workflows/render-samples.yml."
+            fi
+          done
+
+      - name: Upload sample MP3s to sharded releases (batched)
+        if: steps.summary.outputs.rendered != '0'
+        env:
+          GH_TOKEN: ${{ secrets.SAMPLES_REPO_TOKEN }}
+        # The previous incarnation uploaded everything to a single
+        # `samples-rolling` release and tripped GitHub's 1000-asset
+        # per-release cap once the corpus passed ~1k files (HTTP 422
+        # Validation Failed in run 26403163305). Sharding across 4 release
+        # tags gives 4000-asset headroom over the current ~3,156 corpus.
+        # The CRC32 shard math here must stay byte-identical to
+        # `_shard_for` in `tools/samples/render_samples.py`.
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          import subprocess, sys, time, zlib
+          from pathlib import Path
+
+          SHARDS = 4
+          BATCH = 80
+          SLEEP_BETWEEN = 20
+          REPO = "HayaiApp/HayaiTTS-samples"
+
+          def shard_for(name: str) -> int:
+              return zlib.crc32(name.encode("utf-8")) % SHARDS
+
+          buckets: dict[int, list[str]] = {i: [] for i in range(SHARDS)}
+          for p in sorted(Path("samples").glob("*.mp3")):
+              buckets[shard_for(p.name)].append(str(p))
+
+          total = sum(len(v) for v in buckets.values())
+          print(f"uploading {total} MP3s across {SHARDS} sharded releases")
+
+          for shard, files in buckets.items():
+              tag = f"samples-{shard}"
+              print(f"shard {shard} ({tag}): {len(files)} files")
+              for i in range(0, len(files), BATCH):
+                  chunk = files[i : i + BATCH]
+                  for attempt in range(1, 6):
+                      rc = subprocess.call(
+                          ["gh", "release", "upload", tag, *chunk,
+                           "--repo", REPO, "--clobber"]
+                      )
+                      if rc == 0:
+                          break
+                      backoff = attempt * 60
+                      print(f"  batch {i} failed (attempt {attempt}); "
+                            f"sleeping {backoff}s")
+                      time.sleep(backoff)
+                  else:
+                      print(f"::error::shard {shard} batch {i} failed "
+                            f"after 5 attempts")
+                      sys.exit(1)
+                  if i + BATCH < len(files):
+                      time.sleep(SLEEP_BETWEEN)
+          print(f"uploaded {total} MP3s")
+          PY
+
+      - name: Sync catalog to bundled asset
+        run: |
+          mkdir -p app/src/main/assets/catalog/v1
+          cp catalog/v1/models.json app/src/main/assets/catalog/v1/models.json
+
+      - name: Commit updated catalog
+        run: |
+          if [ -n "$(git status --porcelain catalog/v1/models.json app/src/main/assets/catalog/v1/models.json)" ]; then
+            git config user.email "actions@github.com"
+            git config user.name "HayaiTTS samples bot"
+            git add catalog/v1/models.json app/src/main/assets/catalog/v1/models.json
+            git commit -m "samples: refresh sampleAudioUrl after sharded render run"
+            git push
+          else
+            echo "no catalog changes — nothing to commit"
+          fi

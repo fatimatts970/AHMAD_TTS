@@ -1,0 +1,252 @@
+name: Build app
+
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Build and Release v{0}', github.event.inputs.version) || github.event.head_commit.message }}
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (without "v" prefix)'
+        required: true
+        type: string
+      beta:
+        description: 'Beta release'
+        default: false
+        required: false
+        type: boolean
+      message:
+        description: 'Message for releases (the text at the top of changelog)'
+        default: ''
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build app
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+    environment: build
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Setup Android SDK
+        run: |
+          ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "build-tools;36.0.0" "platforms;android-36"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Mount Gradle home (sticky disk)
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: ${{ github.repository }}-gradle-home
+          path: ~/.gradle
+
+      - name: Copy CI gradle.properties
+        run: |
+          mkdir -p ~/.gradle
+          cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-disabled: true
+
+      - name: Grant gradlew execute permission
+        run: chmod +x gradlew
+
+      - name: Extract branch name
+        id: branch_name
+        shell: bash
+        run: echo "NAME=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+
+      # PROD
+      - name: Prepare release build
+        if: github.event.inputs.version != '' && github.event.inputs.beta != 'true'
+        run: |
+          echo "VERSION_TAG=v${{github.event.inputs.version}}" >> $GITHUB_ENV
+          echo "RELEASE_STAGE=release" >> $GITHUB_ENV
+
+      # BETA
+      - name: Prepare beta build
+        if: github.event.inputs.version != '' && github.event.inputs.beta == 'true'
+        run: |
+          BETA_COUNT=$(git tag -l --sort=refname "v${{github.event.inputs.version}}-b*" | tail -n1 | sed "s/^\S*-b//g")
+          if [ -z "$BETA_COUNT" ]; then BETA_COUNT="1"; else BETA_COUNT=$((BETA_COUNT+1)); fi
+          echo "VERSION_TAG=v${{github.event.inputs.version}}-b${BETA_COUNT}" >> $GITHUB_ENV
+          echo "RELEASE_STAGE=release" >> $GITHUB_ENV
+
+      # NIGHTLY (every push to main, no version tag — produces artifacts only)
+      - name: Prepare nightly build
+        if: steps.branch_name.outputs.NAME == 'main' && github.event.inputs.version == ''
+        run: |
+          echo "VERSION_TAG=r$(git rev-list --count HEAD)" >> $GITHUB_ENV
+          echo "RELEASE_STAGE=release" >> $GITHUB_ENV
+          echo "COMMIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          echo "COMMIT_SHORT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Build
+        # Export VERSION_TAG into the build so `BuildConfig.VERSION_NAME` matches
+        # the release tag (`v2.0.0`, `v2.0.0-b3`, `r142`). The settings screen
+        # derives the channel pill (Stable / Beta / Nightly) from this value.
+        env:
+          HAYAITTS_VERSION_NAME: ${{ env.VERSION_TAG }}
+        run: ./gradlew assembleRelease
+
+      - name: Upload R8 mapping
+        uses: actions/upload-artifact@v4
+        if: env.VERSION_TAG != ''
+        with:
+          name: mapping-${{ env.VERSION_TAG }}
+          path: app/build/outputs/mapping/release
+
+      # Sign every *-unsigned.apk directly with apksigner instead of the
+      # third-party action (which hardcoded the `app-standard-*.apk` flavor
+      # naming hayai uses and can't see our flavorless APKs). Decode the
+      # base64 keystore secret, align each APK with zipalign, sign with
+      # apksigner, verify, then drop the .idsig sidecar.
+      - name: Sign APKs
+        if: env.VERSION_TAG != ''
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          ALIAS: ${{ secrets.ALIAS }}
+        run: |
+          set -euo pipefail
+          dir="app/build/outputs/apk/release"
+          keystore="$RUNNER_TEMP/hayaitts-release.jks"
+          echo "$SIGNING_KEY" | base64 -d > "$keystore"
+          buildtools="$ANDROID_SDK_ROOT/build-tools/36.0.0"
+          for unsigned in "$dir"/*-unsigned.apk; do
+            base=$(basename "$unsigned" -unsigned.apk)
+            aligned="$dir/$base-aligned.apk"
+            signed="$dir/$base.apk"
+            "$buildtools/zipalign" -p -f 4 "$unsigned" "$aligned"
+            "$buildtools/apksigner" sign \
+              --ks "$keystore" \
+              --ks-key-alias "$ALIAS" \
+              --ks-pass "pass:$KEY_STORE_PASSWORD" \
+              --key-pass "pass:$KEY_PASSWORD" \
+              --out "$signed" \
+              "$aligned"
+            "$buildtools/apksigner" verify --print-certs "$signed" > /dev/null
+            rm -f "$unsigned" "$aligned"
+            echo "  signed $signed"
+          done
+          rm -f "$keystore"
+
+      - name: Rename + checksum signed APKs
+        if: env.VERSION_TAG != ''
+        run: |
+          set -e
+          dir="app/build/outputs/apk/release"
+          mv $dir/app-universal-release.apk hayaitts-${{ env.VERSION_TAG }}.apk
+          echo "APK_UNIVERSAL_SHA=$(sha256sum hayaitts-${{ env.VERSION_TAG }}.apk | awk '{print $1}')" >> $GITHUB_ENV
+          mv $dir/app-arm64-v8a-release.apk hayaitts-arm64-v8a-${{ env.VERSION_TAG }}.apk
+          echo "APK_ARM64_V8A_SHA=$(sha256sum hayaitts-arm64-v8a-${{ env.VERSION_TAG }}.apk | awk '{print $1}')" >> $GITHUB_ENV
+          mv $dir/app-armeabi-v7a-release.apk hayaitts-armeabi-v7a-${{ env.VERSION_TAG }}.apk
+          echo "APK_ARMEABI_V7A_SHA=$(sha256sum hayaitts-armeabi-v7a-${{ env.VERSION_TAG }}.apk | awk '{print $1}')" >> $GITHUB_ENV
+          mv $dir/app-x86_64-release.apk hayaitts-x86_64-${{ env.VERSION_TAG }}.apk
+          echo "APK_X86_64_SHA=$(sha256sum hayaitts-x86_64-${{ env.VERSION_TAG }}.apk | awk '{print $1}')" >> $GITHUB_ENV
+
+      # Stable + beta releases. `v1.0.0` → stable (prerelease=false),
+      # `v1.0.0-b1` → beta (prerelease=true). Both land as drafts so a human
+      # approves the published version after smoke-testing the APKs from the
+      # workflow run.
+      - name: Create Release (stable / beta)
+        if: startsWith(env.VERSION_TAG, 'v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION_TAG }}
+          name: HayaiTTS ${{ env.VERSION_TAG }}
+          body: |
+            ${{ github.event.inputs.message }}
+
+            ---
+
+            ### Checksums
+
+            | Variant | SHA-256 |
+            | ------- | ------- |
+            | Universal | ${{ env.APK_UNIVERSAL_SHA }} |
+            | arm64-v8a | ${{ env.APK_ARM64_V8A_SHA }} |
+            | armeabi-v7a | ${{ env.APK_ARMEABI_V7A_SHA }} |
+            | x86_64 | ${{ env.APK_X86_64_SHA }} |
+
+            > [!TIP]
+            >
+            > If you are unsure which APK to install, pick **hayaitts-${{ env.VERSION_TAG }}.apk** (the universal one).
+          files: |
+            hayaitts-${{ env.VERSION_TAG }}.apk
+            hayaitts-arm64-v8a-${{ env.VERSION_TAG }}.apk
+            hayaitts-armeabi-v7a-${{ env.VERSION_TAG }}.apk
+            hayaitts-x86_64-${{ env.VERSION_TAG }}.apk
+          draft: true
+          prerelease: ${{ github.event.inputs.beta }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Nightly auto-publish to the dedicated nightly repo (HayaiApp/HayaiTTS-nightly),
+      # tagged `r-NN`. Keeping nightlies out of the main HayaiApp/HayaiTTS repo
+      # means:
+      #   1. Releases / Issues / Discussions on the main repo only show
+      #      production-ready stable + beta builds — much friendlier for new
+      #      users browsing GitHub.
+      #   2. The in-app auto-updater can poll the nightly repo only when the
+      #      user has explicitly opted into the Nightly channel; Stable / Beta
+      #      users never see a nightly tag in their update dialog.
+      #   3. CI for the nightly repo never re-runs source builds — it only
+      #      hosts release assets uploaded here.
+      #
+      # We reuse `SAMPLES_REPO_TOKEN` here — it's the PAT the
+      # render-samples workflow uses to publish into HayaiTTS-samples, and
+      # the same token has been granted release-write on
+      # HayaiApp/HayaiTTS-nightly so a second secret is not needed. The
+      # workflow-default GITHUB_TOKEN cannot create releases on a different
+      # repository (returns 403 "Resource not accessible by integration").
+      - name: Create Nightly
+        if: startsWith(env.VERSION_TAG, 'r')
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: HayaiApp/HayaiTTS-nightly
+          tag_name: ${{ env.VERSION_TAG }}
+          name: HayaiTTS Nightly ${{ env.VERSION_TAG }}
+          body: |
+            > [!CAUTION]
+            >
+            > _**This nightly build is for testing only.**_
+            >
+            > Triggered by commit [`${{ env.COMMIT_SHORT_HASH }}`](https://github.com/HayaiApp/HayaiTTS/commit/${{ env.COMMIT_HASH }}). Not production-ready — for stable releases, see https://github.com/HayaiApp/HayaiTTS/releases?q=prerelease%3Afalse.
+
+            ### Checksums
+
+            | Variant | SHA-256 |
+            | ------- | ------- |
+            | Universal | ${{ env.APK_UNIVERSAL_SHA }} |
+            | arm64-v8a | ${{ env.APK_ARM64_V8A_SHA }} |
+            | armeabi-v7a | ${{ env.APK_ARMEABI_V7A_SHA }} |
+            | x86_64 | ${{ env.APK_X86_64_SHA }} |
+          files: |
+            hayaitts-${{ env.VERSION_TAG }}.apk
+            hayaitts-arm64-v8a-${{ env.VERSION_TAG }}.apk
+            hayaitts-armeabi-v7a-${{ env.VERSION_TAG }}.apk
+            hayaitts-x86_64-${{ env.VERSION_TAG }}.apk
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.SAMPLES_REPO_TOKEN }}

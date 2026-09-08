@@ -1,0 +1,91 @@
+name: catalog-refresh
+
+# Re-runs `tools/catalog/build_catalog.py` once a week and commits the new
+# `catalog/v1/models.json` directly to main when it changes. The script
+# discovers every voice on the upstream sherpa-onnx TTS model index and
+# computes a sha256 over each release tarball — so when k2-fsa publishes new
+# voices or rebuilds an existing one, HayaiTTS sees it within a week without
+# anyone touching the repo by hand.
+#
+# We commit straight to main rather than opening a PR: the work is fully
+# deterministic, every voice change is captured in the workflow log, and
+# there's no human review value in approving 188 sha256 strings.
+
+on:
+  schedule:
+    # 06:30 UTC every Monday. Off-peak for GitHub Actions queues.
+    - cron: '30 6 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    # Bandwidth-bound (~10 GB streamed across ~190 bundles). Blacksmith's
+    # faster CPUs gain us nothing here, so stay on GitHub-hosted runners to
+    # save Blacksmith minutes for the build workflows.
+    runs-on: ubuntu-latest
+    # Generator streams ~5–10 GB across 180+ bundles; allow a generous wall.
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install generator dependencies
+        run: pip install -r tools/catalog/requirements.txt
+
+      # Persist the enrichment + sha256 cache week-to-week so the generator
+      # only re-fetches model cards / HF + GitHub metadata whose 7-day TTL
+      # has lapsed. Keyed on the run id with a stable restore prefix so each
+      # run warm-starts from the previous week's cache and writes a fresh one.
+      - name: Restore catalog cache
+        uses: actions/cache@v4
+        with:
+          path: .catalog_cache
+          key: catalog-cache-${{ github.run_id }}
+          restore-keys: |
+            catalog-cache-
+
+      - name: Regenerate catalog
+        # GITHUB_TOKEN lifts the GitHub API rate limit from 60/hr (anonymous)
+        # to 5000/hr so the full-release asset enumeration + per-repo license
+        # lookups don't throttle across 600+ voices. HF metadata stays
+        # anonymous (no secret required); enrichment is fail-soft either way.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/catalog/build_catalog.py --output catalog/v1/models.json --cache-dir .catalog_cache
+
+      # Curated overlay (descriptions / source URLs / use cases). Runs
+      # after the scrape so family defaults can fill anything the
+      # scraper left blank; per-voice keys then override scrape output
+      # for the handful of voices we hand-tag.
+      - name: Apply curated overlay
+        run: python tools/catalog/apply_overlay.py
+
+      # docs/MODELS.md is the human-readable view of catalog/v1/models.json
+      # that the README points at. Rebuild it after every refresh so the
+      # markdown table never lags behind the JSON the app actually consumes.
+      - name: Regenerate model list
+        run: python tools/catalog/build_model_list.py --catalog catalog/v1/models.json --output docs/MODELS.md
+
+      - name: Commit + push if changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet --exit-code catalog/v1/models.json docs/MODELS.md; then
+            echo "Catalog + model list are identical to upstream — nothing to commit."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Count voices for the commit message — a quick at-a-glance audit
+          # of catalog churn from `git log catalog/v1/models.json`.
+          count=$(python -c "import json; print(len(json.load(open('catalog/v1/models.json'))['voices']))")
+          git add catalog/v1/models.json docs/MODELS.md
+          git commit -m "Refresh catalog from upstream sherpa-onnx index ($count voices)"
+          git push origin HEAD:main
