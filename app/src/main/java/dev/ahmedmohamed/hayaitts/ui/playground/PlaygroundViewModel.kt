@@ -49,12 +49,20 @@ class PlaygroundViewModel(
     }
 
     val previewAmplitudes: StateFlow<FloatArray> = previewPlayer.amplitudes
+    val previewPositionMs: StateFlow<Long> = previewPlayer.positionMs
+    val previewDurationMs: StateFlow<Long> = previewPlayer.durationMs
 
     private val textFlow = MutableStateFlow("")
     private val selectedSidFlow = MutableStateFlow(0)
     private val playingFlow = MutableStateFlow(false)
     private val generatingFlow = MutableStateFlow(false)
     private val errorFlow = MutableStateFlow<String?>(null)
+    // Which history row (if any) the current playback belongs to — lets the
+    // row that's actually sounding show a live position slider instead of
+    // its static duration. Null while generating a brand-new sample (before
+    // it's recorded) or when nothing is playing.
+    private val playingEntryIdFlow = MutableStateFlow<Long?>(null)
+    val playingEntryId: StateFlow<Long?> = playingEntryIdFlow
 
     private var playbackJob: Job? = null
 
@@ -118,18 +126,20 @@ class PlaygroundViewModel(
                     errorFlow.value = "Synthesis failed"
                     return@launch
                 }
-                historyRepo.record(
+                val recorded = historyRepo.record(
                     voiceId = voiceId, text = text, sid = current.selectedSid,
                     tuning = current.tuning, samples = output.samples, sampleRate = output.sampleRate,
                 )
                 generatingFlow.value = false
                 playingFlow.value = true
+                playingEntryIdFlow.value = recorded.id
                 previewPlayer.playSamples(output.samples, output.sampleRate)
             } catch (t: Throwable) {
                 errorFlow.value = t.message ?: t.javaClass.simpleName
             } finally {
                 generatingFlow.value = false
                 playingFlow.value = false
+                playingEntryIdFlow.value = null
             }
         }
     }
@@ -143,10 +153,12 @@ class PlaygroundViewModel(
                 return@launch
             }
             playingFlow.value = true
+            playingEntryIdFlow.value = entry.id
             try {
                 previewPlayer.playSamples(samples, entry.sampleRate)
             } finally {
                 playingFlow.value = false
+                playingEntryIdFlow.value = null
             }
         }
     }
@@ -155,11 +167,22 @@ class PlaygroundViewModel(
         viewModelScope.launch { historyRepo.delete(entry) }
     }
 
+    /** Saves the sample as a .wav into Music/AHMAD_TTS via MediaStore. */
+    fun downloadSample(entry: PlaygroundSampleEntity) {
+        viewModelScope.launch {
+            val ok = historyRepo.exportToMusic(entry)
+            errorFlow.value = if (ok) "Saved to Music/AHMAD_TTS" else "Save failed"
+        }
+    }
+
+    fun estimatedDurationMs(entry: PlaygroundSampleEntity): Long = historyRepo.estimatedDurationMs(entry)
+
     fun stop() {
         playbackJob?.cancel()
         playbackJob = null
         playingFlow.value = false
         generatingFlow.value = false
+        playingEntryIdFlow.value = null
         previewPlayer.stop()
     }
 

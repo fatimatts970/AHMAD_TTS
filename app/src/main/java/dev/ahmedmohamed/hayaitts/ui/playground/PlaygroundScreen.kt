@@ -29,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Female
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Person
@@ -93,6 +94,9 @@ fun PlaygroundScreen(
     val viewModel: PlaygroundViewModel = koinViewModel { parametersOf(voiceId) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val amplitudes by viewModel.previewAmplitudes.collectAsStateWithLifecycle()
+    val positionMs by viewModel.previewPositionMs.collectAsStateWithLifecycle()
+    val durationMs by viewModel.previewDurationMs.collectAsStateWithLifecycle()
+    val playingEntryId by viewModel.playingEntryId.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -128,6 +132,8 @@ fun PlaygroundScreen(
     ) { padding ->
         PlaygroundBody(
             state = state, amplitudes = amplitudes, accent = accent, paddingValues = padding,
+            playingEntryId = playingEntryId, positionMs = positionMs, durationMs = durationMs,
+            onDownload = viewModel::downloadSample, estimateDuration = viewModel::estimatedDurationMs,
             onTextChange = viewModel::onTextChange,
             onPickSpeaker = viewModel::setSpeaker,
             onSpeedChange = viewModel::setSpeed,
@@ -154,6 +160,11 @@ private fun PlaygroundBody(
     amplitudes: FloatArray,
     accent: Color,
     paddingValues: PaddingValues,
+    playingEntryId: Long?,
+    positionMs: Long,
+    durationMs: Long,
+    onDownload: (PlaygroundSampleEntity) -> Unit,
+    estimateDuration: (PlaygroundSampleEntity) -> Long,
     onTextChange: (String) -> Unit,
     onPickSpeaker: (Int) -> Unit,
     onSpeedChange: (Float) -> Unit,
@@ -197,7 +208,11 @@ private fun PlaygroundBody(
             onGenerate = onGenerate, onStop = onStop,
         )
         WaveformBars(amplitudes = amplitudes, playing = state.playing, accent = accent)
-        HistorySection(entries = state.history, onReplay = onReplay, onDelete = onDelete)
+        HistorySection(
+            entries = state.history, onReplay = onReplay, onDelete = onDelete, onStop = onStop,
+            onDownload = onDownload, estimateDuration = estimateDuration,
+            playingEntryId = playingEntryId, positionMs = positionMs, durationMs = durationMs,
+        )
         if (!state.isInstalled) {
             Text(
                 stringResource(R.string.playground_not_installed),
@@ -411,6 +426,12 @@ private fun HistorySection(
     entries: List<PlaygroundSampleEntity>,
     onReplay: (PlaygroundSampleEntity) -> Unit,
     onDelete: (PlaygroundSampleEntity) -> Unit,
+    onStop: () -> Unit,
+    onDownload: (PlaygroundSampleEntity) -> Unit,
+    estimateDuration: (PlaygroundSampleEntity) -> Long,
+    playingEntryId: Long?,
+    positionMs: Long,
+    durationMs: Long,
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.playground_history_header), style = MaterialTheme.typography.titleMedium)
@@ -424,7 +445,17 @@ private fun HistorySection(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 items(items = entries, key = { it.id }) { entry ->
-                    HistoryRow(entry, { onReplay(entry) }, { onDelete(entry) })
+                    val isPlaying = playingEntryId == entry.id
+                    HistoryRow(
+                        entry = entry,
+                        isPlaying = isPlaying,
+                        positionMs = if (isPlaying) positionMs else 0L,
+                        durationMs = if (isPlaying) durationMs else estimateDuration(entry),
+                        onReplay = { onReplay(entry) },
+                        onStop = onStop,
+                        onDelete = { onDelete(entry) },
+                        onDownload = { onDownload(entry) },
+                    )
                 }
             }
         }
@@ -432,46 +463,89 @@ private fun HistorySection(
 }
 
 @Composable
-private fun HistoryRow(entry: PlaygroundSampleEntity, onReplay: () -> Unit, onDelete: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth()
+private fun HistoryRow(
+    entry: PlaygroundSampleEntity,
+    isPlaying: Boolean,
+    positionMs: Long,
+    durationMs: Long,
+    onReplay: () -> Unit,
+    onStop: () -> Unit,
+    onDelete: () -> Unit,
+    onDownload: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()
         .clip(RoundedCornerShape(16.dp))
         .background(MaterialTheme.colorScheme.surfaceContainerLow)
-        .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(entry.text.takeIf { it.isNotBlank() } ?: "—",
-                style = MaterialTheme.typography.bodyMedium, maxLines = 1)
-            Row(modifier = Modifier.padding(top = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                AssistChip(
-                    onClick = {}, enabled = false,
-                    label = {
-                        Text(
-                            stringResource(R.string.playground_history_chip,
-                                formatMultiplier(entry.speed),
-                                formatMultiplier(entry.pitch),
-                                formatMultiplier(entry.lengthScale)),
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                    },
-                    colors = AssistChipDefaults.assistChipColors(
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        .padding(horizontal = 12.dp, vertical = 10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(entry.text.takeIf { it.isNotBlank() } ?: "—",
+                    style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                Row(modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    AssistChip(
+                        onClick = {}, enabled = false,
+                        label = {
+                            Text(
+                                stringResource(R.string.playground_history_chip,
+                                    formatMultiplier(entry.speed),
+                                    formatMultiplier(entry.pitch),
+                                    formatMultiplier(entry.lengthScale)),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                    )
+                    Text(formatRelativeTime(entry.createdAt),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            IconButton(onClick = if (isPlaying) onStop else onReplay) {
+                Icon(
+                    if (isPlaying) Icons.Outlined.Stop else Icons.Outlined.PlayArrow,
+                    contentDescription = stringResource(
+                        if (isPlaying) R.string.action_stop else R.string.playground_history_play,
                     ),
                 )
-                Text(formatRelativeTime(entry.createdAt),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            IconButton(onClick = onDownload) {
+                Icon(Icons.Outlined.Download, contentDescription = stringResource(R.string.playground_history_download))
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.playground_history_delete))
             }
         }
-        IconButton(onClick = onReplay) {
-            Icon(Icons.Outlined.PlayArrow, contentDescription = stringResource(R.string.playground_history_play))
-        }
-        IconButton(onClick = onDelete) {
-            Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.playground_history_delete))
+        // "____•___1:20" style progress: a slider (thumb = position) plus
+        // elapsed/total time, live while this row is the one actually
+        // sounding, otherwise a static total duration.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Slider(
+                value = if (durationMs > 0) (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) else 0f,
+                onValueChange = {},
+                enabled = false,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.size(8.dp))
+            Text(
+                if (isPlaying) "${formatDuration(positionMs)} / ${formatDuration(durationMs)}"
+                else formatDuration(durationMs),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
+}
+
+private fun formatDuration(ms: Long): String {
+    val totalSeconds = (ms / 1000L).coerceAtLeast(0L)
+    val minutes = totalSeconds / 60L
+    val seconds = totalSeconds % 60L
+    return "%d:%02d".format(minutes, seconds)
 }
 
 private fun formatMultiplier(value: Float): String {

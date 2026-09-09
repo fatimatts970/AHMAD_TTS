@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="PluralsCandidate">
-    <string name="app_name">HayaiTTS</string>
+    <string name="app_name">AHMAD TTS</string>
     <string name="library_empty_title">No voices installed yet</string>
     <string name="library_empty_subtitle">Browse the catalog to download offline neural voices</string>
     <string name="library_browse_action">Browse models</string>
@@ -231,10 +231,10 @@
     <!-- P4: First-launch onboarding flow (onboarding_*) -->
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_next">Next</string>
-    <string name="onboarding_welcome_title">Welcome to HayaiTTS</string>
+    <string name="onboarding_welcome_title">Welcome to AHMAD TTS</string>
     <string name="onboarding_welcome_body">Offline neural text-to-speech for Android. Every voice runs on your device — no cloud, no telemetry, no quota.</string>
-    <string name="onboarding_engine_title">Set HayaiTTS as your engine</string>
-    <string name="onboarding_engine_body">Open Settings → System → Languages &amp; input → Text-to-speech engines and pick HayaiTTS as your preferred engine. Apps that read text aloud will route through HayaiTTS automatically.</string>
+    <string name="onboarding_engine_title">Set AHMAD TTS as your engine</string>
+    <string name="onboarding_engine_body">Open Settings → System → Languages &amp; input → Text-to-speech engines and pick AHMAD TTS as your preferred engine. Apps that read text aloud will route through AHMAD TTS automatically.</string>
     <string name="onboarding_engine_action">Open system TTS settings</string>
     <string name="onboarding_tier_title">Pick voices for your device</string>
     <string name="onboarding_tier_recommendation_low">Recommended for your device: Low. Low models work even on entry-level hardware.</string>
@@ -253,7 +253,7 @@
     <string name="settings_help_label">Help &amp; FAQ</string>
     <string name="settings_help_subtitle">Setup, troubleshooting, and tips</string>
     <string name="help_section_getting_started_title">Getting started</string>
-    <string name="help_section_getting_started_body">1. Browse the catalog and install a voice for your language.\n2. Open Settings → System → Languages &amp; input → Text-to-speech engines and set HayaiTTS as your preferred engine.\n3. Try the synth from any app that reads text aloud — accessibility, ebook readers, navigation, or assistant apps.</string>
+    <string name="help_section_getting_started_body">1. Browse the catalog and install a voice for your language.\n2. Open Settings → System → Languages &amp; input → Text-to-speech engines and set AHMAD TTS as your preferred engine.\n3. Try the synth from any app that reads text aloud — accessibility, ebook readers, navigation, or assistant apps.</string>
     <string name="help_section_choose_voice_title">Choosing the right voice</string>
     <string name="help_section_choose_voice_body">Voices come in three quality tiers:\n• Low — fastest, smallest, runs on any phone.\n• Mid — balanced speed and quality. Recommended for most users.\n• High — best quality, needs at least 4 GB RAM.\n\nDifferent model families have different strengths: Piper is fast and lightweight, VITS / Matcha / Kokoro favour expressiveness, and Supertonic / ZipVoice / Pocket push naturalness. The catalog shows a \"Recommended for your device\" pill on voices that match your hardware tier.</string>
     <string name="help_section_locale_defaults_title">Per-locale defaults</string>
@@ -264,11 +264,11 @@
     <string name="help_section_storage_title">Storage location</string>
     <string name="help_section_storage_body">By default voices are installed under the app\'s internal storage. If your device has an SD card you can move every installed voice to the card via Settings → Storage location → External SD card. The migration is live — installed voices are copied over while the toggle runs.\n\nUninstalling the app removes internal voices but does NOT remove voices on an SD card; delete the SD-card folder manually if you want to reclaim that space.</string>
     <string name="help_section_updates_title">App updates</string>
-    <string name="help_section_updates_body">HayaiTTS checks for new releases when you open the app (debounced — at most once every 6 hours). When an update is available a dialog offers to download and install it. Update channels:\n• Stable — production releases, lowest risk.\n• Beta — release candidates a few days ahead of stable.\n• Nightly — the latest commit on main, may include rough edges.\nPick a channel from Settings → Update channel.</string>
+    <string name="help_section_updates_body">AHMAD TTS checks for new releases when you open the app (debounced — at most once every 6 hours). When an update is available a dialog offers to download and install it. Update channels:\n• Stable — production releases, lowest risk.\n• Beta — release candidates a few days ahead of stable.\n• Nightly — the latest commit on main, may include rough edges.\nPick a channel from Settings → Update channel.</string>
     <string name="help_section_troubleshooting_title">Troubleshooting</string>
-    <string name="help_section_troubleshooting_body">Voices don\'t appear in other apps — make HayaiTTS the system default engine (Settings → System → Languages &amp; input → Text-to-speech engines).\n\nDownload failed: checksum mismatch — re-try the download from Browse. If the failure persists the upstream model has changed; please file a bug.\n\nSynth produces silence — the model files may have been corrupted by an interrupted extraction. Uninstall the voice from Library, then re-install from Browse.\n\nApp crashes when picking a voice — check that the catalog finished loading. If the issue persists, clear the download cache from Settings → Storage.</string>
+    <string name="help_section_troubleshooting_body">Voices don\'t appear in other apps — make AHMAD TTS the system default engine (Settings → System → Languages &amp; input → Text-to-speech engines).\n\nDownload failed: checksum mismatch — re-try the download from Browse. If the failure persists the upstream model has changed; please file a bug.\n\nSynth produces silence — the model files may have been corrupted by an interrupted extraction. Uninstall the voice from Library, then re-install from Browse.\n\nApp crashes when picking a voice — check that the catalog finished loading. If the issue persists, clear the download cache from Settings → Storage.</string>
     <string name="help_section_about_title">About</string>
-    <string name="help_section_about_body">HayaiTTS is an open-source, offline-first text-to-speech engine for Android. Built on sherpa-onnx with neural voices from Piper, Kokoro, VITS, Matcha, Kitten, ZipVoice, Pocket, and Supertonic. Licensed under GPL-3.0.</string>
+    <string name="help_section_about_body">AHMAD TTS is an open-source, offline-first text-to-speech engine for Android. Built on sherpa-onnx with neural voices from Piper, Kokoro, VITS, Matcha, Kitten, ZipVoice, Pocket, and Supertonic. Licensed under GPL-3.0.</string>
     <string name="help_section_about_action">View on GitHub</string>
 
     <!-- P4: Rich tooltips on key controls (tooltip_*) -->
@@ -302,6 +302,7 @@
     <string name="playground_history_chip" translatable="false">%1$s / %2$s / %3$s</string>
     <string name="playground_history_play">Replay sample</string>
     <string name="playground_history_delete">Delete sample</string>
+    <string name="playground_history_download">Save to Music</string>
     <string name="playground_time_just_now">just now</string>
     <string name="playground_time_minutes">%1$d min ago</string>
     <string name="playground_time_hours">%1$d hr ago</string>
@@ -349,7 +350,7 @@
     <string name="download_notification_action_retry">Retry</string>
 
     <string name="empty_section">Nothing here yet.</string>
-    <string name="speak_selection_label">Speak with HayaiTTS</string>
+    <string name="speak_selection_label">Speak with AHMAD TTS</string>
     <string name="voice_detail_sample_play">Listen sample</string>
     <string name="voice_detail_sample_loading">Loading…</string>
     <string name="voice_detail_sample_stop">Stop sample</string>
@@ -408,17 +409,17 @@
     <string name="extraction_channel_name">Voice extraction</string>
     <string name="extraction_channel_description">Quiet progress while a downloaded voice is being unpacked.</string>
     <string name="tts_nudge_channel_name">Speaking</string>
-    <string name="tts_nudge_channel_description">Shown while HayaiTTS is actively speaking on behalf of another app.</string>
-    <string name="tts_nudge_title">HayaiTTS is speaking</string>
+    <string name="tts_nudge_channel_description">Shown while AHMAD TTS is actively speaking on behalf of another app.</string>
+    <string name="tts_nudge_title">AHMAD TTS is speaking</string>
     <string name="tts_nudge_action_stop">Stop</string>
     <string name="updates_channel_name">App updates</string>
-    <string name="updates_channel_description">Notifies you when a newer HayaiTTS build is on GitHub.</string>
+    <string name="updates_channel_description">Notifies you when a newer AHMAD TTS build is on GitHub.</string>
     <string name="catalog_refresh_channel_name">New voices</string>
     <string name="catalog_refresh_channel_description">When the weekly catalog scrape finds new voices to install.</string>
 
     <!-- v2.5: crash screen -->
-    <string name="crash_title">HayaiTTS crashed</string>
-    <string name="crash_body">Sorry — something went wrong. Copy the report below and paste it into a GitHub issue at github.com/HayaiApp/HayaiTTS so we can fix it.</string>
+    <string name="crash_title">AHMAD TTS crashed</string>
+    <string name="crash_body">Sorry — something went wrong. Copy the report below and paste it into a GitHub issue at github.com/fatimatts970/AHMAD_TTS so we can fix it.</string>
     <string name="crash_copy">Copy report</string>
     <string name="crash_restart">Restart</string>
     <string name="crash_copied">Copied to clipboard</string>

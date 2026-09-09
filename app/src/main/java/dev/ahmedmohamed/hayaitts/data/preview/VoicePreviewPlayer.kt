@@ -37,6 +37,13 @@ class VoicePreviewPlayer(
     private val _amplitudes = MutableStateFlow(FloatArray(BAR_COUNT))
     val amplitudes: StateFlow<FloatArray> = _amplitudes.asStateFlow()
 
+    // Elapsed/total playback time, updated on the same ~60ms cadence as the
+    // amplitude envelope. Drives the "____•___1:20" style progress UI.
+    private val _positionMs = MutableStateFlow(0L)
+    val positionMs: StateFlow<Long> = _positionMs.asStateFlow()
+    private val _durationMs = MutableStateFlow(0L)
+    val durationMs: StateFlow<Long> = _durationMs.asStateFlow()
+
     /** Voice Detail entry point — synth + play, untuned. */
     suspend fun play(voiceId: String, text: String, sid: Int = 0) = withContext(dispatchers.default) {
         stop()
@@ -83,19 +90,21 @@ class VoicePreviewPlayer(
             .build()
 
         current = track
+        _positionMs.value = 0L
+        val frames = pcm.size / 2
+        _durationMs.value = (frames.toLong() * 1000L / sampleRate)
         track.setVolume(AudioTrack.getMaxVolume())
         track.play()
         runCatching {
             track.write(pcm, 0, pcm.size)
-            val frames = pcm.size / 2
-            val playbackMs = (frames.toLong() * 1000L / sampleRate)
-            publishAmplitudeWindows(samples = samples, sampleRate = sampleRate, playbackMs = playbackMs)
+            publishAmplitudeWindows(samples = samples, sampleRate = sampleRate, playbackMs = _durationMs.value)
         }
         stop()
     }
 
     fun stop() {
         _amplitudes.value = FloatArray(BAR_COUNT)
+        _positionMs.value = 0L
         val toRelease = current ?: return
         current = null
         runCatching { toRelease.stop() }
@@ -113,6 +122,7 @@ class VoicePreviewPlayer(
             tail[BAR_COUNT - 1] = rmsOfWindow(samples, cursor * windowSamples, windowSamples)
             _amplitudes.value = tail.copyOf()
             cursor++
+            _positionMs.value = (cursor * windowMs).coerceAtMost(playbackMs)
             Thread.sleep(windowMs)
         }
         val cooldownMs = (playbackMs - cursor * windowMs).coerceAtLeast(0L)
