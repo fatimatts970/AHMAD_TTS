@@ -122,7 +122,19 @@ class DownloadRepositoryImpl(
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             VoiceDownloadWorker.uniqueName(voiceCard.id),
-            ExistingWorkPolicy.KEEP,
+            // REPLACE, not KEEP: if the app process was killed mid-download
+            // (OEM battery managers on some devices do this aggressively),
+            // WorkManager can be left believing a unique-name job is still
+            // "enqueued" even though nothing will ever run it again. With
+            // KEEP, tapping Install again silently did nothing — the only
+            // way out was clearing app data, which wiped the cached
+            // .tar.bz2 and forced a full re-download from 0%. REPLACE always
+            // starts a fresh attempt; combined with the resumable download
+            // and the finalFile-exists short-circuit in VoiceDownloadWorker,
+            // a fresh attempt skips the network entirely when the bundle is
+            // already fully downloaded, and only redoes extraction (fast)
+            // when that's the only step left.
+            ExistingWorkPolicy.REPLACE,
             builder.build(),
         )
         log.i { "Enqueued download for ${voiceCard.id} (wifiOnly=$wifiOnly)" }
