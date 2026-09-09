@@ -223,7 +223,7 @@ jobs:
         if: startsWith(env.VERSION_TAG, 'r')
         uses: softprops/action-gh-release@v2
         with:
-          repository: HayaiApp/HayaiTTS-nightly
+          repository: fatimatts970/AHMAD_TTS
           tag_name: ${{ env.VERSION_TAG }}
           name: HayaiTTS Nightly ${{ env.VERSION_TAG }}
           body: |
