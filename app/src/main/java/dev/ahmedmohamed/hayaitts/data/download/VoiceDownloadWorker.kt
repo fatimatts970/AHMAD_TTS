@@ -135,8 +135,18 @@ class VoiceDownloadWorker(
             val totalBytes = try {
                 downloadBundle(voice, partFile, finalFile)
             } catch (t: Throwable) {
-                if (isTransient(t) && runAttemptCount < MAX_RETRIES) {
-                    log.w(t) { "Transient download failure for ${voice.id}, attempt $runAttemptCount/$MAX_RETRIES — will retry (resuming from ${partFile.length()}B)" }
+                // isStopped (WorkManager paused us — network dropped, wifi
+                // switched, constraints no longer met) and our own
+                // InterruptedException (thrown from inside the copy loop for
+                // the same reason) must ALWAYS resolve as a resumable retry,
+                // never a hard failure — WorkManager reschedules us the
+                // moment the network is back, and downloadBundle() will pick
+                // up from partFile's byte offset. Treating this as permanent
+                // was the bug: it fell through to failPersisted() below,
+                // which deleted the partially-downloaded file, so any wifi
+                // drop or network switch reset progress to 0%.
+                if (isStopped || t is InterruptedException || (isTransient(t) && runAttemptCount < MAX_RETRIES)) {
+                    log.w(t) { "Interrupted/transient download failure for ${voice.id} (isStopped=$isStopped), attempt $runAttemptCount/$MAX_RETRIES — will retry (resuming from ${partFile.length()}B)" }
                     isRetrying = true
                     return@withContext Result.retry()
                 }
@@ -212,8 +222,8 @@ class VoiceDownloadWorker(
                 val sideResult = runCatching { downloadAuxiliary(voice.vocoderUrl, target) }
                 if (sideResult.isFailure) {
                     val err = sideResult.exceptionOrNull()
-                    if (isTransient(err) && runAttemptCount < MAX_RETRIES) {
-                        log.w(err) { "Vocoder transient failure for ${voice.id}, retrying" }
+                    if (isStopped || err is InterruptedException || (isTransient(err) && runAttemptCount < MAX_RETRIES)) {
+                        log.w(err) { "Vocoder interrupted/transient failure for ${voice.id} (isStopped=$isStopped), retrying" }
                         isRetrying = true
                         return@withContext Result.retry()
                     }
