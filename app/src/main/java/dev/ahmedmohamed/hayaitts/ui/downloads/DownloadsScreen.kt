@@ -193,10 +193,29 @@ private fun DownloadsBody(
             }
             downloadRows(state.completed) { row ->
                 DownloadRow(row = row, trailing = {
-                    OutlinedButton(onClick = { onRetry(row) }) {
-                        Icon(Icons.Outlined.CloudDownload, contentDescription = null)
-                        Spacer(Modifier.size(8.dp))
-                        Text(stringResource(R.string.downloads_action_redownload))
+                    if (row.installed) {
+                        // Already fully installed — nothing to do here.
+                        // Icons.Outlined.CheckCircle already renders in the
+                        // status line above; no action button needed.
+                        Text(
+                            stringResource(R.string.action_installed),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    } else {
+                        // File is already fully downloaded (and possibly
+                        // fully extracted) but never got marked installed —
+                        // e.g. the app was killed right before that final
+                        // step. Tapping this re-enqueues the SAME job that
+                        // now short-circuits the network entirely once
+                        // finalFile exists on disk (see VoiceDownloadWorker),
+                        // so it finishes almost instantly instead of
+                        // re-downloading everything from 0%.
+                        FilledTonalButton(onClick = { onRetry(row) }) {
+                            Icon(Icons.Outlined.CheckCircle, contentDescription = null)
+                            Spacer(Modifier.size(8.dp))
+                            Text(stringResource(R.string.action_install))
+                        }
                     }
                 }, onRemoveHistory = { onRemoveHistory(row.voiceId) })
             }
@@ -315,8 +334,9 @@ private fun StatusLine(row: DownloadsViewModel.Row, contentColor: Color) {
         DownloadState.Cancelled -> stringResource(R.string.library_download_cancelled)
         DownloadState.Done -> {
             val ts = row.completedAtMillis
-            if (ts != null) stringResource(R.string.downloads_status_completed_ago, relativeAgo(ts))
-            else stringResource(R.string.downloads_status_completed)
+            val sizeSuffix = row.voiceCard?.approxSizeMb?.let { mb -> " · ~$mb MB" }.orEmpty()
+            (if (ts != null) stringResource(R.string.downloads_status_completed_ago, relativeAgo(ts))
+            else stringResource(R.string.downloads_status_completed)) + sizeSuffix
         }
         DownloadState.Idle -> ""
     }
