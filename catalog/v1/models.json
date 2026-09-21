@@ -3914,16 +3914,16 @@
       "family": "supertonic",
       "id": "sherpa-onnx-supertonic-3-tts-int8-2026-05-11",
       "languages": [
-        "ar",
         "bg",
+        "ar",
+        "hr",
         "cs",
         "da",
-        "hr",
         "nl",
         "en-US",
         "et",
-        "fr-FR",
         "fi",
+        "fr-FR",
         "de-DE",
         "el",
         "hi",
@@ -15124,34 +15124,6 @@
         "en-US",
         "female",
         "medium"
-      ],
-      "tier": "mid",
-      "title": "Lessac"
-    },
-    {
-      "approxSizeMb": 36,
-      "author": "Rhasspy / Mike Hansen",
-      "available": true,
-      "bundleUrl": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-lessac-medium-fp16.tar.bz2",
-      "demoUrl": "https://huggingface.co/spaces/k2-fsa/text-to-speech",
-      "family": "piper",
-      "id": "vits-piper-en_US-lessac-medium-fp16",
-      "languages": [
-        "en",
-        "us"
-      ],
-      "license": "MIT",
-      "quality": "medium",
-      "sampleRateHz": 24000,
-      "sha256": "b49fb8387258902fa1bc9dfa226bcc11dd5d06b0ffedb1d2130beae9f6c3f6a7",
-      "sourceUrl": "https://github.com/rhasspy/piper",
-      "speakers": [
-        {
-          "gender": "F",
-          "genderConfidence": "inferred",
-          "id": 0,
-          "name": "lessac"
-        }
       ],
       "tier": "mid",
       "title": "Lessac"
