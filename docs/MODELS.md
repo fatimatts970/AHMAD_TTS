@@ -1,10 +1,10 @@
 # Voice catalog
 
-*Auto-generated from `catalog/v1/models.json` on 2026-09-28 by `tools/catalog/build_model_list.py` (run from the weekly [catalog-refresh](../.github/workflows/catalog-refresh.yml) workflow). Do not edit by hand — the next refresh will overwrite your changes.*
+*Auto-generated from `catalog/v1/models.json` on 2026-10-05 by `tools/catalog/build_model_list.py` (run from the weekly [catalog-refresh](../.github/workflows/catalog-refresh.yml) workflow). Do not edit by hand — the next refresh will overwrite your changes.*
 
 ## Summary
 
-- **630 voices** across **8 model families**
+- **632 voices** across **8 model families**
 - **136 languages** covered
 - Bundle size: 13–635 MB (median 36 MB)
 - **6 voices** support reference-audio cloning
@@ -13,7 +13,7 @@
 
 | Family | Voices | Notes |
 |---|---:|---|
-| **piper** | 534 | Compact VITS-based voices from the rhasspy/piper project. 10–60 MB per voice, sub-second on a 2020+ phone, ~70 languages covered. |
+| **piper** | 536 | Compact VITS-based voices from the rhasspy/piper project. 10–60 MB per voice, sub-second on a 2020+ phone, ~70 languages covered. |
 | **kokoro** | 6 | Higher-quality multilingual VITS variant (Kokoro-82M). 80–360 MB per voice; English bundles ship 1–50 speakers in a single model. |
 | **kitten** | 7 | Tiny English-only VITS distillations tuned for low-end phones. <60 MB, fastest synthesis on the catalog. |
 | **matcha** | 5 | Diffusion-based Matcha-TTS voices. Ships a vocoder side-asset alongside the main weights — Browse handles the dual download. |
@@ -22,7 +22,7 @@
 | **pocket** | 2 | Compact voice-cloning model. Same reference-audio API as ZipVoice but with a smaller voice-embedding cache and lighter weights. |
 | **vits** | 70 | _(family blurb pending — add to `FAMILY_BLURB`)_ |
 
-## piper (534)
+## piper (536)
 
 Compact VITS-based voices from the rhasspy/piper project. 10–60 MB per voice, sub-second on a 2020+ phone, ~70 languages covered.
 
@@ -132,6 +132,7 @@ Compact VITS-based voices from the rhasspy/piper project. 10–60 MB per voice, 
 | Dii | pt-BR | 1 | 67 MB | high | — | — | MIT |
 | Dii | pt-PT | 1 | 67 MB | high | — | — | MIT |
 | Dmitri | ru-RU | 1 | 67 MB | mid | medium | — | MIT |
+| Dmitri | ru, ru | 1 | 36 MB | mid | medium | — | MIT |
 | Dmitri | ru, ru | 1 | 21 MB | mid | medium | — | MIT |
 | Edon | sq-AL | 1 | 67 MB | mid | medium | — | MIT |
 | Edon | sq, al | 1 | 36 MB | mid | medium | — | MIT |
@@ -344,6 +345,7 @@ Compact VITS-based voices from the rhasspy/piper project. 10–60 MB per voice, 
 | Priyamvada | hi, in | 1 | 36 MB | mid | medium | — | MIT |
 | Priyamvada | hi, in | 1 | 21 MB | mid | medium | — | MIT |
 | Ramona | de-DE | 1 | 67 MB | low | low | — | MIT |
+| Ramona | de, de | 1 | 36 MB | mid | low | — | MIT |
 | Ramona | de, de | 1 | 21 MB | mid | low | — | MIT |
 | Rapunzelina | el-GR | 1 | 67 MB | low | low | — | MIT |
 | Rapunzelina | el, gr | 1 | 36 MB | mid | low | — | MIT |

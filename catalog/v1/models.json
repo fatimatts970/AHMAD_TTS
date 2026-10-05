@@ -3918,22 +3918,22 @@
         "bg",
         "hr",
         "cs",
-        "nl",
         "da",
+        "nl",
         "en-US",
-        "et",
-        "fr-FR",
         "fi",
+        "fr-FR",
+        "et",
         "de-DE",
-        "el",
         "hi",
+        "el",
         "hu",
-        "id",
         "it-IT",
-        "ja-JP",
-        "ko-KR",
+        "id",
         "lv",
+        "ja-JP",
         "lt",
+        "ko-KR",
         "pl",
         "pt",
         "ro",
@@ -3941,9 +3941,9 @@
         "sk",
         "es-ES",
         "sl",
-        "sv",
-        "uk",
         "tr",
+        "uk",
+        "sv",
         "vi"
       ],
       "license": "openrail",
@@ -9472,6 +9472,34 @@
         }
       ],
       "tier": "low",
+      "title": "Ramona"
+    },
+    {
+      "approxSizeMb": 36,
+      "author": "Rhasspy / Mike Hansen",
+      "available": true,
+      "bundleUrl": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-de_DE-ramona-low-fp16.tar.bz2",
+      "demoUrl": "https://huggingface.co/spaces/k2-fsa/text-to-speech",
+      "family": "piper",
+      "id": "vits-piper-de_DE-ramona-low-fp16",
+      "languages": [
+        "de",
+        "de"
+      ],
+      "license": "MIT",
+      "quality": "low",
+      "sampleRateHz": 24000,
+      "sha256": "fb9f7a771943951c603cbcef8a93c448728f44c0446253253d04c09f489e3ef0",
+      "sourceUrl": "https://www.caito.de/2019/01/03/the-m-ailabs-speech-dataset/",
+      "speakers": [
+        {
+          "gender": "F",
+          "genderConfidence": "inferred",
+          "id": 0,
+          "name": "ramona"
+        }
+      ],
+      "tier": "mid",
       "title": "Ramona"
     },
     {
@@ -44022,6 +44050,34 @@
           "url": "https://github.com/HayaiApp/HayaiTTS-samples/releases/download/samples-2/vits-piper-ru_RU-dmitri-medium__sid0__ru-RU.mp3"
         }
       ],
+      "speakers": [
+        {
+          "gender": "M",
+          "genderConfidence": "inferred",
+          "id": 0,
+          "name": "dmitri"
+        }
+      ],
+      "tier": "mid",
+      "title": "Dmitri"
+    },
+    {
+      "approxSizeMb": 36,
+      "author": "Rhasspy / Mike Hansen",
+      "available": true,
+      "bundleUrl": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-ru_RU-dmitri-medium-fp16.tar.bz2",
+      "demoUrl": "https://huggingface.co/spaces/k2-fsa/text-to-speech",
+      "family": "piper",
+      "id": "vits-piper-ru_RU-dmitri-medium-fp16",
+      "languages": [
+        "ru",
+        "ru"
+      ],
+      "license": "MIT",
+      "quality": "medium",
+      "sampleRateHz": 24000,
+      "sha256": "ac046c5f1c8e7419546623d3d9423de7871cad60ee99485f0c9f3e3991a60091",
+      "sourceUrl": "https://github.com/OHF-Voice/voice-datasets",
       "speakers": [
         {
           "gender": "M",
