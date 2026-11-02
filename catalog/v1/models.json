@@ -3667,7 +3667,7 @@
       ],
       "sampleAudioUrl": "https://github.com/HayaiApp/HayaiTTS-samples/releases/download/samples-3/matcha-icefall-en_US-ljspeech.mp3",
       "sampleRateHz": 22050,
-      "sha256": "7c251d9ad3fda3d21a0f8a71a0e0b1f59574c4b1cfce6eb7e3c537b6e3b4e1e8",
+      "sha256": "c2c7e2abb085603aa348065a86be886407c601f666bd47a31333755779eca653",
       "sourceUrl": "https://github.com/shivammehta25/Matcha-TTS",
       "speakerSamples": [
         {
@@ -3712,7 +3712,7 @@
       "license": "MIT",
       "sampleAudioUrl": "https://github.com/HayaiApp/HayaiTTS-samples/releases/download/samples-2/matcha-icefall-zh-baker.mp3",
       "sampleRateHz": 22050,
-      "sha256": "1aeed45be50d3fa01dde083e103759a7124cde52676e24e16a93f839c4dfa215",
+      "sha256": "8da2e113b85dfea37b11bcdc994506aa86b584ee3348c2065271fb6f75cb83b8",
       "sourceUrl": "https://github.com/shivammehta25/Matcha-TTS",
       "speakerSamples": [
         {
@@ -3916,13 +3916,13 @@
       "languages": [
         "ar",
         "bg",
+        "hr",
         "cs",
         "da",
-        "hr",
         "nl",
         "en-US",
-        "et",
         "fi",
+        "et",
         "fr-FR",
         "de-DE",
         "el",
@@ -3936,11 +3936,11 @@
         "lt",
         "pl",
         "pt",
-        "ro",
-        "ru",
         "sk",
-        "es-ES",
+        "ru",
+        "ro",
         "sl",
+        "es-ES",
         "sv",
         "tr",
         "uk",
@@ -6390,7 +6390,7 @@
       ],
       "license": "Apache-2.0",
       "sampleRateHz": 24000,
-      "sha256": "9169bee08d9cc2698fba6f56f0a5588bcfb2748d1475ea4a0a23d7e09a1ddcdd",
+      "sha256": "85dfae5a9c8143100a9106a90b0adb2f2c93682143759672b82c985e779d0d00",
       "speakers": [
         {
           "gender": "U",
@@ -6403,7 +6403,7 @@
       "title": "Speaker_0"
     },
     {
-      "approxSizeMb": 73,
+      "approxSizeMb": 74,
       "available": true,
       "bundleUrl": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-icefall-en_US-ljspeech-medium.tar.bz2",
       "demoUrl": "https://huggingface.co/spaces/k2-fsa/text-to-speech",
@@ -6415,7 +6415,7 @@
       ],
       "license": "Apache-2.0",
       "sampleRateHz": 24000,
-      "sha256": "cdfa6932f6be4b4be0aab2f06441bb6a6995c2e3d02b5027af23cc1dfe650209",
+      "sha256": "5872080507e1d2b3c92f5c827be94928782724f1486ed4dcda5dc662c1478efd",
       "speakers": [
         {
           "gender": "U",
